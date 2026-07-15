@@ -83,7 +83,34 @@ class RobotsParser:
     def has_sitemap_reference(self) -> bool:
         """Check if robots.txt references a sitemap"""
         return 'sitemap:' in self.content.lower()
-    
+
+    def get_crawl_delay(self, bot_name: str) -> Optional[float]:
+        """
+        Return the Crawl-delay value (in seconds) for a given bot or the wildcard.
+        Returns None if no crawl-delay is set.
+        """
+        current_agent = None
+        crawl_delays: Dict[str, float] = {}
+
+        for line in self.content.split('\n'):
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if line.lower().startswith('user-agent:'):
+                current_agent = line.split(':', 1)[1].strip()
+            elif line.lower().startswith('crawl-delay:') and current_agent:
+                try:
+                    crawl_delays[current_agent] = float(line.split(':', 1)[1].strip())
+                except ValueError:
+                    pass
+
+        # Check specific bot first, then wildcard
+        if bot_name in crawl_delays:
+            return crawl_delays[bot_name]
+        if '*' in crawl_delays:
+            return crawl_delays['*']
+        return None
+
     def get_sitemap_urls(self) -> List[str]:
         """Extract sitemap URLs from robots.txt"""
         sitemaps = []
@@ -276,5 +303,62 @@ class HTMLParser:
             return True
         
         return False
+
+    def get_open_graph_tags(self) -> Dict[str, str]:
+        """Return a dict of Open Graph property→content pairs present in <head>."""
+        og_tags: Dict[str, str] = {}
+        for tag in self.soup.find_all('meta', property=re.compile(r'^og:', re.I)):
+            prop = tag.get('property', '').lower()
+            content = tag.get('content', '')
+            if prop and content:
+                og_tags[prop] = content
+        return og_tags
+
+    def get_twitter_card_tags(self) -> Dict[str, str]:
+        """Return a dict of Twitter Card name→content pairs present in <head>."""
+        tc_tags: Dict[str, str] = {}
+        for tag in self.soup.find_all('meta', attrs={'name': re.compile(r'^twitter:', re.I)}):
+            name = tag.get('name', '').lower()
+            content = tag.get('content', '')
+            if name and content:
+                tc_tags[name] = content
+        return tc_tags
+
+    def has_hreflang(self) -> bool:
+        """Check whether any hreflang link tags are present."""
+        return bool(self.soup.find('link', attrs={'rel': 'alternate', 'hreflang': True}))
+
+    def get_lang_attribute(self) -> Optional[str]:
+        """Return the lang attribute of the <html> element, or None."""
+        html_tag = self.soup.find('html')
+        if html_tag:
+            return html_tag.get('lang') or html_tag.get('xml:lang')
+        return None
+
+    def has_speakable_schema(self) -> bool:
+        """Return True if any JSON-LD block declares a 'speakable' property."""
+        for data in self.get_json_ld():
+            if isinstance(data, dict):
+                if 'speakable' in data:
+                    return True
+                for item in data.get('@graph', []):
+                    if isinstance(item, dict) and 'speakable' in item:
+                        return True
+        return False
+
+    def get_content_type_charset(self) -> Optional[str]:
+        """Return the charset declared in <meta charset> or http-equiv Content-Type."""
+        # <meta charset="utf-8">
+        meta_charset = self.soup.find('meta', charset=True)
+        if meta_charset:
+            return meta_charset.get('charset', '').lower()
+        # <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        meta_ct = self.soup.find('meta', attrs={'http-equiv': re.compile(r'content-type', re.I)})
+        if meta_ct:
+            content = meta_ct.get('content', '')
+            match = re.search(r'charset=([^\s;]+)', content, re.I)
+            if match:
+                return match.group(1).lower()
+        return None
 
 # Made with Bob

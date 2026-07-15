@@ -669,32 +669,91 @@ def main():
     with st.expander("ℹ️ About This Tool"):
         st.markdown("""
         ### What does this tool check?
-        
+
         **Bot Access (40% weight)**
         - robots.txt restrictions for AI bots
+        - Crawl-delay setting (high values throttle AI indexing)
         - Cloudflare AI bot blocking
-        - Meta robots and X-Robots-Tag headers
-        
+        - Meta robots (`noindex`, `noai`) and X-Robots-Tag headers
+
         **Renderability (30% weight)**
-        - JavaScript-dependent content
+        - JavaScript-dependent content (raw HTML vs. rendered comparison)
         - Paywall detection
         - Login requirements
-        
+
         **Structure & Metadata (30% weight)**
-        - Schema.org structured data
-        - Heading hierarchy
+        - Schema.org structured data (Organization, Article, FAQPage, HowTo, Product)
+        - AI Overview signals: FAQPage / HowTo schema, speakable property
+        - Open Graph tags (og:title, og:description, og:url)
+        - Twitter Card tags
+        - Language declaration (`lang` attribute, hreflang)
+        - Charset declaration (UTF-8)
+        - Heading hierarchy (H1–H6)
         - Title and meta description
         - Canonical tags
         - Sitemap presence
-        
+        - llms.txt (AI-readable site summary at /llms.txt)
+
         ### Scoring
-        - **80-100** 🟢 Good - Well optimized
-        - **50-79** 🟡 Needs Improvement - Some issues
-        - **0-49** 🔴 Critical Issues - Major problems
-        
+        - **80-100** 🟢 Good — Well optimised for AI crawlers
+        - **50-79** 🟡 Needs Improvement — Some issues to address
+        - **0-49** 🔴 Critical Issues — Major problems blocking AI access
+
         ### AI Bots Checked
-        GPTBot, ClaudeBot, ChatGPT-User, anthropic-ai, PerplexityBot, 
-        Google-Extended, CCBot, Amazonbot, Applebot-Extended
+        **OpenAI**: GPTBot, ChatGPT-User, OAI-SearchBot
+        **Anthropic**: ClaudeBot, anthropic-ai, Claude-Web
+        **Google**: Google-Extended, Googlebot
+        **Perplexity**: PerplexityBot, DuckAssistBot
+        **Meta**: meta-externalagent
+        **Others**: CCBot, Amazonbot, Applebot-Extended, Bytespider, YouBot, cohere-ai, Diffbot, Timpibot
+        """)
+
+    with st.expander("💡 Quick Wins to Improve Your Score"):
+        st.markdown("""
+        ### Top actions to maximise AI crawlability
+
+        1. **Allow all AI bots in robots.txt** — ensure no `Disallow: /` for GPTBot, ClaudeBot, etc.
+        2. **Create /llms.txt** — a plain-text summary of your site ([spec](https://llmstxt.org))
+        3. **Add FAQPage or HowTo JSON-LD** — highest impact for AI Overview eligibility
+        4. **Add Open Graph tags** — `og:title`, `og:description`, `og:url` help AI citation tools
+        5. **Set `<meta charset="utf-8">`** — first tag in `<head>`, prevents encoding issues
+        6. **Add `lang="en"` to `<html>`** — tells AI the content language unambiguously
+        7. **Reference your sitemap in robots.txt** — `Sitemap: https://yourdomain.com/sitemap.xml`
+        8. **Remove `noai` / `noindex` directives** if you want AI tools to index content
+        9. **Lower or remove Crawl-delay** — values > 10s severely throttle AI crawlers
+        10. **Enable server-side rendering** — critical content should be visible in raw HTML
+
+        ### Sample robots.txt for maximum AI access
+        ```
+        User-agent: *
+        Allow: /
+
+        User-agent: GPTBot
+        Allow: /
+
+        User-agent: ClaudeBot
+        Allow: /
+
+        User-agent: Google-Extended
+        Allow: /
+
+        Sitemap: https://yourdomain.com/sitemap.xml
+        ```
+
+        ### Minimal llms.txt template
+        ```
+        # My Website
+
+        > One-line description of what your site does.
+
+        ## Pages
+        - [Home](https://yourdomain.com/): Main landing page
+        - [About](https://yourdomain.com/about): Company background
+        - [Blog](https://yourdomain.com/blog): Articles and updates
+
+        ## Usage
+        Content may be used for AI training and summarisation with attribution.
+        ```
         """)
 
 

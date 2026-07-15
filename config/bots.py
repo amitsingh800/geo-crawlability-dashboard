@@ -4,15 +4,38 @@ Configuration for AI bot user agents to check
 
 # AI bots to check in robots.txt and meta tags
 AI_BOTS = [
+    # OpenAI
     'GPTBot',
     'ChatGPT-User',
+    'OAI-SearchBot',
+    # Anthropic
     'ClaudeBot',
     'anthropic-ai',
-    'PerplexityBot',
+    'Claude-Web',
+    # Google
     'Google-Extended',
+    'Googlebot',
+    # Perplexity
+    'PerplexityBot',
+    'DuckAssistBot',
+    # Meta
+    'meta-externalagent',
+    # Common Crawl (used by many AI training pipelines)
     'CCBot',
+    # Amazon
     'Amazonbot',
-    'Applebot-Extended'
+    # Apple
+    'Applebot-Extended',
+    # Bytedance
+    'Bytespider',
+    # You.com
+    'YouBot',
+    # Cohere
+    'cohere-ai',
+    # Diffbot
+    'Diffbot',
+    # Timpi
+    'Timpibot',
 ]
 
 # User agent for our crawler

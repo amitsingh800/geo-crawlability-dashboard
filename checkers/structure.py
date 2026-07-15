@@ -352,42 +352,222 @@ class StructureChecker:
     
     def check_llms_txt(self, scorer: CrawlabilityScorer) -> Dict:
         """
-        Check for llms.txt (informational only)
-        
-        Args:
-            scorer: Scoring object
-            
-        Returns:
-            Dict with llms.txt detection results
+        Check for llms.txt — awards a small bonus point for sites that have adopted
+        the emerging convention of exposing an AI-readable summary at /llms.txt.
         """
-        results = {
-            'has_llms_txt': False
-        }
-        
+        results = {'has_llms_txt': False}
+
         llms_content, error = self.crawler.fetch_llms_txt(self.base_url)
-        
+
         if llms_content and not error:
             results['has_llms_txt'] = True
-            # Note: This is informational only, not scored
             scorer.add_check(
                 'structure',
-                'llms.txt (Informational)',
+                'llms.txt',
                 'pass',
-                'llms.txt found (emerging practice, not a ranking factor)',
+                'llms.txt found — site provides an AI-readable summary document',
                 None
             )
         else:
-            # Don't penalize for missing llms.txt
             scorer.add_check(
                 'structure',
-                'llms.txt (Informational)',
+                'llms.txt',
+                'warn',
+                'llms.txt not found — add /llms.txt to help AI assistants understand your site',
+                'Create /llms.txt with a concise plain-text description of your site, its pages, '
+                'and any usage permissions. See https://llmstxt.org for the spec.'
+            )
+
+        return results
+
+    def check_open_graph(self, html_content: str, scorer: CrawlabilityScorer) -> Dict:
+        """Check Open Graph and Twitter Card social-preview metadata."""
+        from utils.parser import HTMLParser
+        parser = HTMLParser(html_content)
+
+        og_tags = parser.get_open_graph_tags()
+        tc_tags = parser.get_twitter_card_tags()
+
+        required_og = {'og:title', 'og:description', 'og:url'}
+        present_og = set(og_tags.keys())
+        missing_og = required_og - present_og
+
+        results = {
+            'has_og': bool(og_tags),
+            'has_twitter_card': bool(tc_tags),
+            'missing_og': list(missing_og),
+        }
+
+        if not missing_og:
+            scorer.add_check(
+                'structure',
+                'Open Graph Tags',
                 'pass',
-                'llms.txt not found (optional, not required)',
+                f'Core Open Graph tags present ({", ".join(sorted(present_og & required_og))})',
                 None
             )
-        
+        elif og_tags:
+            scorer.add_check(
+                'structure',
+                'Open Graph Tags',
+                'warn',
+                f'Open Graph present but missing: {", ".join(sorted(missing_og))}',
+                'Add the missing og: meta tags so AI assistants and social previews show rich context'
+            )
+        else:
+            scorer.add_check(
+                'structure',
+                'Open Graph Tags',
+                'fail',
+                'No Open Graph tags found — AI citation tools use og:title / og:description for context',
+                'Add <meta property="og:title">, <meta property="og:description">, '
+                'and <meta property="og:url"> to <head>'
+            )
+
+        if tc_tags:
+            scorer.add_check(
+                'structure',
+                'Twitter Card Tags',
+                'pass',
+                f'Twitter Card tags present ({len(tc_tags)} tags)',
+                None
+            )
+        else:
+            scorer.add_check(
+                'structure',
+                'Twitter Card Tags',
+                'warn',
+                'No Twitter Card tags found',
+                'Add <meta name="twitter:card" content="summary_large_image"> and twitter:title/description'
+            )
+
         return results
-    
+
+    def check_language_signals(self, html_content: str, scorer: CrawlabilityScorer) -> Dict:
+        """Check language declaration and hreflang for international sites."""
+        from utils.parser import HTMLParser
+        parser = HTMLParser(html_content)
+
+        lang = parser.get_lang_attribute()
+        has_hreflang = parser.has_hreflang()
+
+        results = {'lang': lang, 'has_hreflang': has_hreflang}
+
+        if lang:
+            scorer.add_check(
+                'structure',
+                'Language Declaration',
+                'pass',
+                f'HTML lang attribute set to "{lang}" — helps AI understand content language',
+                None
+            )
+        else:
+            scorer.add_check(
+                'structure',
+                'Language Declaration',
+                'warn',
+                'No lang attribute on <html> element',
+                'Add lang="en" (or appropriate BCP-47 code) to the <html> tag'
+            )
+
+        if has_hreflang:
+            scorer.add_check(
+                'structure',
+                'Hreflang Tags',
+                'pass',
+                'Hreflang alternate links found — correct international signals for AI',
+                None
+            )
+        # hreflang is optional for single-language sites; no penalty if absent
+
+        return results
+
+    def check_ai_signals(self, html_content: str, scorer: CrawlabilityScorer) -> Dict:
+        """
+        Check for schema types that improve AI Overview / featured-snippet eligibility:
+        FAQPage, HowTo, speakable, and charset declaration.
+        """
+        from utils.parser import HTMLParser
+        parser = HTMLParser(html_content)
+
+        schema_types = parser.get_schema_types()
+        has_faq = 'FAQPage' in schema_types
+        has_howto = 'HowTo' in schema_types
+        has_speakable = parser.has_speakable_schema()
+        charset = parser.get_content_type_charset()
+
+        results = {
+            'has_faq_schema': has_faq,
+            'has_howto_schema': has_howto,
+            'has_speakable': has_speakable,
+            'charset': charset,
+        }
+
+        # FAQ / HowTo schema
+        aio_types = [t for t in ('FAQPage', 'HowTo') if t in schema_types]
+        if aio_types:
+            scorer.add_check(
+                'structure',
+                'AI Overview Schema',
+                'pass',
+                f'High-value AIO schema found: {", ".join(aio_types)} — increases eligibility for AI-generated answers',
+                None
+            )
+        else:
+            scorer.add_check(
+                'structure',
+                'AI Overview Schema',
+                'warn',
+                'No FAQPage or HowTo schema detected',
+                'Add FAQPage or HowTo JSON-LD to Q&A / instructional content to improve AI citation likelihood'
+            )
+
+        # Speakable
+        if has_speakable:
+            scorer.add_check(
+                'structure',
+                'Speakable Schema',
+                'pass',
+                'speakable property found — content optimised for voice/AI assistants',
+                None
+            )
+        else:
+            scorer.add_check(
+                'structure',
+                'Speakable Schema',
+                'warn',
+                'No speakable schema detected',
+                'Add a speakable property to your Article/WebPage schema to flag the most AI-readable sections'
+            )
+
+        # Charset
+        if charset and charset in ('utf-8', 'utf8'):
+            scorer.add_check(
+                'structure',
+                'Charset Declaration',
+                'pass',
+                f'Charset declared as "{charset}" — ensures correct text encoding for AI parsers',
+                None
+            )
+        elif charset:
+            scorer.add_check(
+                'structure',
+                'Charset Declaration',
+                'warn',
+                f'Charset declared as "{charset}" — UTF-8 is strongly preferred',
+                'Set <meta charset="utf-8"> to ensure maximum compatibility with AI crawlers'
+            )
+        else:
+            scorer.add_check(
+                'structure',
+                'Charset Declaration',
+                'warn',
+                'No charset declaration found',
+                'Add <meta charset="utf-8"> as the first tag inside <head>'
+            )
+
+        return results
+
     def run_all_checks(self, html_content: str, scorer: CrawlabilityScorer) -> Dict:
         """Run all structure checks"""
         results = {
@@ -397,9 +577,12 @@ class StructureChecker:
             'description': self.check_meta_description(html_content, scorer),
             'canonical': self.check_canonical(html_content, scorer),
             'sitemap': self.check_sitemap(scorer),
-            'llms_txt': self.check_llms_txt(scorer)
+            'llms_txt': self.check_llms_txt(scorer),
+            'open_graph': self.check_open_graph(html_content, scorer),
+            'language': self.check_language_signals(html_content, scorer),
+            'ai_signals': self.check_ai_signals(html_content, scorer),
         }
-        
+
         return results
 
 # Made with Bob

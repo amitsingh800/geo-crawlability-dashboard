@@ -99,7 +99,36 @@ class BotAccessChecker:
                 'No sitemap reference in robots.txt',
                 'Add "Sitemap: https://yourdomain.com/sitemap.xml" to robots.txt'
             )
-        
+
+        # Check Crawl-delay — a high delay throttles AI crawlers significantly
+        crawl_delay = parser.get_crawl_delay('*')
+        if crawl_delay is not None:
+            if crawl_delay > 10:
+                scorer.add_check(
+                    'bot_access',
+                    'Crawl-delay',
+                    'fail',
+                    f'Crawl-delay set to {crawl_delay}s — severely throttles AI crawlers',
+                    'Lower Crawl-delay to 1–5 seconds or remove it to allow faster AI indexing'
+                )
+            elif crawl_delay > 5:
+                scorer.add_check(
+                    'bot_access',
+                    'Crawl-delay',
+                    'warn',
+                    f'Crawl-delay set to {crawl_delay}s — may slow AI crawler discovery',
+                    'Consider lowering Crawl-delay to ≤5 seconds for faster AI indexing'
+                )
+            else:
+                scorer.add_check(
+                    'bot_access',
+                    'Crawl-delay',
+                    'pass',
+                    f'Crawl-delay set to {crawl_delay}s — acceptable for AI crawlers',
+                    None
+                )
+        # No crawl-delay is fine; no check needed
+
         return results
     
     def check_meta_robots(self, html_content: str, scorer: CrawlabilityScorer) -> Dict:
