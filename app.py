@@ -46,121 +46,301 @@ st.html("""
 </script>
 """)
 
-# Custom CSS for better styling
+# Custom CSS — soft lavender × yellow palette
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 3rem;
-        font-weight: bold;
+    /* ── HERO ── */
+    .geo-hero {
+        background: linear-gradient(150deg, #c4b5fd 0%, #a78bfa 45%, #9061f9 100%);
+        padding: 2.8rem 2rem 0;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+        margin: -1rem -1rem 0 -1rem;
+        border-radius: 0 0 0 0;
+    }
+    .geo-hero::before {
+        content: '';
+        position: absolute;
+        top: -40px; right: -50px;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, rgba(250,204,21,0.22) 0%, transparent 65%);
+        pointer-events: none;
+    }
+    .geo-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 10px; left: -60px;
+        width: 260px; height: 260px;
+        background: radial-gradient(circle, rgba(109,40,217,0.18) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .geo-eyebrow {
+        display: inline-block;
+        background: rgba(255,255,255,0.2);
+        color: #1e0a3c;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 0.25rem 0.9rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.38);
+        margin-bottom: 0.8rem;
+    }
+    .geo-title {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #1e0a3c;
+        line-height: 1.15;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.02em;
+    }
+    .geo-title span { color: #facc15; }
+    .geo-subtitle {
+        color: rgba(46,26,71,0.7);
+        font-size: 0.9rem;
+        margin-bottom: 1.6rem;
+        white-space: nowrap;
+    }
+    /* Hero shelf (white lift) */
+    .geo-shelf {
+        background: #f5f3ff;
+        border-radius: 16px 16px 0 0;
+        padding: 1.5rem 1.5rem 0;
+        margin-top: 1.8rem;
+    }
+
+    /* ── SUMMARY STRIP ── */
+    .summary-strip {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 1.25rem;
+        background: white;
+        border: 1.5px solid #ddd6fe;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+    .score-badge {
+        background: linear-gradient(135deg, #6d28d9, #4c1d95);
+        color: white;
+        border-radius: 10px;
+        width: 82px; height: 82px;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        flex-shrink: 0;
+        text-align: center;
+    }
+    .score-badge .snum {
+        font-size: 2.2rem; font-weight: 800; line-height: 1; color: #facc15;
+    }
+    .score-badge .sgrade {
+        font-size: 0.72rem; font-weight: 700; color: rgba(224,210,255,0.88);
+    }
+    .summary-body h3 {
+        font-size: 0.98rem; font-weight: 700; margin-bottom: 0.25rem; color: #2e1a47;
+    }
+    .summary-body p {
+        font-size: 0.86rem; color: #57606a; line-height: 1.6; margin: 0;
+    }
+    .status-row {
+        display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem;
+    }
+    .stat-pill {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        background: #f5f3ff; border: 1px solid #ddd6fe;
+        border-radius: 6px; padding: 0.28rem 0.65rem; font-size: 0.75rem;
+        color: #2e1a47;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .dot-crit { background: #dc2626; }
+    .dot-warn { background: #d97706; }
+    .dot-good { background: #16a34a; }
+    .summary-meta {
+        font-size: 0.76rem; color: #57606a; text-align: right;
+        display: flex; flex-direction: column; gap: 0.22rem; white-space: nowrap;
+    }
+    .summary-meta strong { color: #2e1a47; }
+    .summary-meta .ok { color: #16a34a; font-weight: 700; }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+        font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em;
+        text-transform: uppercase; color: #5b21b6;
+        display: flex; align-items: center; gap: 0.5rem;
+        margin: 1.5rem 0 0.9rem;
+    }
+    .section-label::after {
+        content: ''; flex: 1; height: 1.5px; background: #ddd6fe;
+    }
+
+    /* ── CATEGORY CARDS ── */
+    .cat-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem;
         margin-bottom: 1rem;
     }
-    .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
+    .cat-card {
+        background: white; border: 1.5px solid #ddd6fe;
+        border-radius: 10px; padding: 1.1rem;
     }
+    .cat-card-top {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        margin-bottom: 0.7rem;
+    }
+    .cat-title { font-size: 0.83rem; font-weight: 700; color: #2e1a47; max-width: 74%; }
+    .cat-score { font-size: 1.7rem; font-weight: 800; line-height: 1; }
+    .cat-score.good  { color: #16a34a; }
+    .cat-score.warn  { color: #d97706; }
+    .cat-score.crit  { color: #dc2626; }
+    .cat-badge {
+        display: inline-block; padding: 0.16rem 0.6rem;
+        border-radius: 20px; font-size: 0.68rem; font-weight: 700; margin-bottom: 0.7rem;
+    }
+    .cat-badge.good { background: #dcfce7; color: #166534; }
+    .cat-badge.warn { background: #fef9c3; color: #854d0e; }
+    .cat-badge.crit { background: #fee2e2; color: #991b1b; }
+    .cat-divider { height: 1px; background: #ede9fe; margin: 0.65rem 0; }
+    .check-list { font-size: 0.79rem; display: flex; flex-direction: column; gap: 0.28rem; }
+    .check-item { display: flex; align-items: flex-start; gap: 0.35rem; color: #57606a; line-height: 1.45; }
+
+    /* ── FIX CARDS ── */
+    .fix-card {
+        background: white; border: 1.5px solid #ddd6fe;
+        border-left: 4px solid #dc2626;
+        border-radius: 10px; padding: 1.1rem 1.3rem; margin-bottom: 0.8rem;
+    }
+    .fix-card.warn { border-left-color: #d97706; }
+    .fix-top {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.45rem; gap: 0.8rem;
+    }
+    .fix-title { font-size: 0.9rem; font-weight: 700; color: #2e1a47; }
+    .fix-badge {
+        font-size: 0.68rem; font-weight: 700; padding: 0.16rem 0.6rem;
+        border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+    .fix-badge.crit { background: #fee2e2; color: #991b1b; }
+    .fix-badge.warn { background: #fef9c3; color: #854d0e; }
+    .fix-body { font-size: 0.84rem; color: #57606a; line-height: 1.6; }
+    .fix-body code {
+        background: #f5f3ff; border: 1px solid #ddd6fe;
+        border-radius: 4px; padding: 0.08rem 0.35rem;
+        font-size: 0.78rem; color: #5b21b6;
+    }
+
+    /* ── SCORE CONTAINER (top result) ── */
     .score-container {
-        text-align: center;
-        padding: 2rem;
-        border-radius: 10px;
-        margin: 2rem 0;
+        text-align: center; padding: 1.5rem;
+        border-radius: 10px; margin: 1.5rem 0;
+        border: 1.5px solid #ddd6fe;
     }
-    .score-good {
-        background-color: #d4edda;
-        border: 2px solid #28a745;
-    }
-    .score-warning {
-        background-color: #fff3cd;
-        border: 2px solid #ffc107;
-    }
-    .score-critical {
-        background-color: #f8d7da;
-        border: 2px solid #dc3545;
-    }
-    .score-number {
-        font-size: 4rem;
-        font-weight: bold;
-        margin: 1rem 0;
-    }
-    .category-score {
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 5px;
-        background-color: #f8f9fa;
-    }
-    .check-pass {
-        color: #28a745;
-        font-weight: bold;
-    }
-    .check-warn {
-        color: #ffc107;
-        font-weight: bold;
-    }
-    .check-fail {
-        color: #dc3545;
-        font-weight: bold;
-    }
+    .score-good    { background: #f0fdf4; border-color: #bbf7d0; }
+    .score-warning { background: #fefce8; border-color: #fde68a; }
+    .score-critical{ background: #fff1f2; border-color: #fecdd3; }
+    .score-number  { font-size: 3.8rem; font-weight: 800; margin: 0.75rem 0; color: #2e1a47; }
+
+    /* ── CHECK RESULTS ── */
+    .check-pass { color: #16a34a; font-weight: 700; }
+    .check-warn { color: #d97706; font-weight: 700; }
+    .check-fail { color: #dc2626; font-weight: 700; }
     .fix-suggestion {
-        background-color: #e7f3ff;
-        padding: 0.5rem;
-        border-left: 3px solid #0066cc;
-        margin-top: 0.5rem;
-        font-style: italic;
+        background: #f5f3ff; padding: 0.5rem 0.75rem;
+        border-left: 3px solid #7c3aed;
+        margin-top: 0.5rem; font-style: italic;
+        font-size: 0.88rem; color: #3b1a5e; border-radius: 0 6px 6px 0;
     }
+
+    /* ── MISC ── */
+    .main-header {
+        font-size: 2.5rem; font-weight: 800; text-align: center; margin-bottom: 0.5rem; color: #2e1a47;
+    }
+    .subtitle { text-align: center; color: #6d4fa0; margin-bottom: 1.5rem; }
 </style>
 """, unsafe_allow_html=True)
 
 
 def display_header():
-    """Display the main header"""
-    st.markdown('<h1 class="main-header">🤖 GEO Crawlability Checker</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Analyze your website\'s accessibility to AI crawlers</p>', unsafe_allow_html=True)
+    """Display the hero section with search bar"""
+    st.markdown("""
+    <div class="geo-hero">
+      <div class="geo-eyebrow">✦ Generative Engine Optimisation</div>
+      <div class="geo-title">Is your site <span>AI-ready</span>?</div>
+      <div class="geo-subtitle">Check how well AI crawlers can access, read &amp; cite your content — in seconds.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def display_score(scores):
     """Display the overall score with traffic light indicator"""
     total_score = scores['total']
     grade = scores['grade']
-    
-    # Determine CSS class based on score
+
     if total_score >= 80:
         css_class = "score-good"
     elif total_score >= 50:
         css_class = "score-warning"
     else:
         css_class = "score-critical"
-    
+
     st.markdown(f"""
     <div class="score-container {css_class}">
-        <div style="font-size: 1.5rem;">{grade}</div>
+        <div style="font-size:1.1rem;color:#5b21b6;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Overall GEO Score</div>
         <div class="score-number">{total_score}</div>
-        <div style="font-size: 1.2rem;">Overall Crawlability Score</div>
+        <div style="font-size:1.5rem;font-weight:800;color:#2e1a47;">Grade {grade}</div>
     </div>
     """, unsafe_allow_html=True)
 
 
+def _score_class(score: int) -> str:
+    if score >= 80:
+        return "good"
+    elif score >= 50:
+        return "warn"
+    return "crit"
+
+
+def _score_label(score: int) -> str:
+    if score >= 80:
+        return "Good"
+    elif score >= 50:
+        return "Needs Work"
+    return "Critical"
+
+
 def display_category_scores(scores):
-    """Display category breakdown scores"""
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("### 🚫 Bot Access")
-        st.markdown(f"**Score: {scores['bot_access']}/100**")
-        st.progress(scores['bot_access'] / 100)
-        st.caption("Weight: 40%")
-    
-    with col2:
-        st.markdown("### 🎨 Renderability")
-        st.markdown(f"**Score: {scores['renderability']}/100**")
-        st.progress(scores['renderability'] / 100)
-        st.caption("Weight: 30%")
-    
-    with col3:
-        st.markdown("### 📋 Structure")
-        st.markdown(f"**Score: {scores['structure']}/100**")
-        st.progress(scores['structure'] / 100)
-        st.caption("Weight: 30%")
+    """Display category breakdown as styled cards"""
+    bot   = scores['bot_access']
+    render = scores['renderability']
+    struct = scores['structure']
+
+    def card(title, score, checks_html):
+        sc = _score_class(score)
+        lbl = _score_label(score)
+        return f"""
+        <div class="cat-card">
+          <div class="cat-card-top">
+            <div class="cat-title">{title}</div>
+            <div class="cat-score {sc}">{score}</div>
+          </div>
+          <span class="cat-badge {sc}">{lbl}</span>
+          <div class="cat-divider"></div>
+          <div class="check-list">{checks_html}</div>
+        </div>"""
+
+    bot_checks   = '<div class="check-item"><span>🤖</span>robots.txt · meta robots · Cloudflare AI block</div>'
+    rend_checks  = '<div class="check-item"><span>🎨</span>JS dependency · paywall · login walls</div>'
+    struct_checks = '<div class="check-item"><span>📋</span>Schema.org · Open Graph · headings · sitemap · llms.txt</div>'
+
+    st.markdown(f"""
+    <div class="section-label">Category Breakdown</div>
+    <div class="cat-grid">
+      {card("🚫 Bot Access · 40%",     bot,    bot_checks)}
+      {card("🎨 Renderability · 30%",  render, rend_checks)}
+      {card("📋 Structure &amp; Meta · 30%", struct, struct_checks)}
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def display_check_result(check):
@@ -169,8 +349,7 @@ def display_check_result(check):
     name = check['name']
     message = check['message']
     fix = check.get('fix')
-    
-    # Status icon and color
+
     if status == 'pass':
         icon = "✅"
         css_class = "check-pass"
@@ -180,14 +359,14 @@ def display_check_result(check):
     else:
         icon = "❌"
         css_class = "check-fail"
-    
+
     st.markdown(f"{icon} **{name}**: <span class='{css_class}'>{status.upper()}</span>", unsafe_allow_html=True)
     st.markdown(f"_{message}_")
-    
+
     if fix:
         st.markdown(f'<div class="fix-suggestion">💡 Fix: {fix}</div>', unsafe_allow_html=True)
-    
-    st.markdown("---")
+
+    st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:0.6rem 0">', unsafe_allow_html=True)
 
 
 def display_detailed_results(results):
@@ -222,20 +401,44 @@ def display_detailed_results(results):
             st.info("No structure checks performed")
 
 
-def display_summary(results):
-    """Display summary statistics"""
+def display_summary(results, url: str = "", elapsed: float = 0.0):
+    """Display summary strip with score badge + status pills"""
     summary = results['summary']
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Checks", summary['total_checks'])
-    with col2:
-        st.metric("Passed", summary['passes'], delta=None, delta_color="normal")
-    with col3:
-        st.metric("Warnings", summary['warnings'], delta=None, delta_color="off")
-    with col4:
-        st.metric("Failed", summary['fails'], delta=None, delta_color="inverse")
+    scores  = results['scores']
+    total   = scores['total']
+    grade   = scores['grade']
+
+    passes   = summary['passes']
+    warnings = summary['warnings']
+    fails    = summary['fails']
+
+    elapsed_str = f"⚡ {elapsed:.1f}s" if elapsed else ""
+
+    st.markdown(f"""
+    <div class="section-label">Analysis Summary</div>
+    <div class="summary-strip">
+      <div class="score-badge">
+        <span class="snum">{total}</span>
+        <span class="sgrade">Grade {grade}</span>
+      </div>
+      <div class="summary-body">
+        <h3>{url or "Analysis Complete"}</h3>
+        <p>Overall GEO crawlability score across bot access, renderability, and structure checks.</p>
+        <div class="status-row">
+          <span class="stat-pill"><span class="dot dot-crit"></span><strong>{fails} Critical</strong></span>
+          <span class="stat-pill"><span class="dot dot-warn"></span><strong>{warnings} Warnings</strong></span>
+          <span class="stat-pill"><span class="dot dot-good"></span><strong>{passes} Passed</strong></span>
+          {"<span class='stat-pill'>" + elapsed_str + "</span>" if elapsed_str else ""}
+        </div>
+      </div>
+      <div class="summary-meta">
+        <div><strong>Total checks:</strong> {summary['total_checks']}</div>
+        <div><strong>Bot Access:</strong> {scores['bot_access']}/100</div>
+        <div><strong>Renderability:</strong> {scores['renderability']}/100</div>
+        <div><strong>Structure:</strong> {scores['structure']}/100</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def find_best_url_match(user_input: str) -> Tuple[Optional[str], Optional[str]]:
@@ -309,7 +512,7 @@ def find_best_url_match(user_input: str) -> Tuple[Optional[str], Optional[str]]:
 def analyze_url(url: str, score_placeholder):
     """
     Main analysis function
-    
+
     Args:
         url: URL to analyze
         score_placeholder: Streamlit placeholder for displaying score at top
@@ -555,25 +758,25 @@ def analyze_url(url: str, score_placeholder):
         update_timer()
         
         results = scorer.get_all_results()
-        
+
         # Clear progress indicators
         progress_bar.empty()
         status_text.empty()
         status_detail.empty()
-        
+
         # Display results with final time
         final_time = time.time() - start_time
         timer_display.success(f"✅ Analysis complete in {final_time:.1f}s")
-        
+
         # Show blocking detection if applicable
         if blocking_reason or used_fallback:
-            st.markdown("## 🚨 Bot Protection Detected")
-            
+            st.markdown("### 🚨 Bot Protection Detected")
+
             if blocking_reason == "timeout":
                 st.error("**Blocking Method**: Timeout/Delay Mechanism")
                 st.markdown("""
                 **Impact**: Site deliberately delays responses to automated requests
-                - **Severity**: High - AI crawlers will experience slow or failed access
+                - **Severity**: High — AI crawlers will experience slow or failed access
                 - **Likely System**: Rate limiting, bot detection, or WAF
                 - **Score Impact**: -10 points from Bot Access category
                 """)
@@ -581,7 +784,7 @@ def analyze_url(url: str, score_placeholder):
                 st.error("**Blocking Method**: 403 Forbidden (Active Bot Detection)")
                 st.markdown("""
                 **Impact**: Site actively blocks automated requests but allows real browsers
-                - **Severity**: Critical - AI crawlers are explicitly blocked
+                - **Severity**: Critical — AI crawlers are explicitly blocked
                 - **Likely System**: Cloudflare Bot Management, Akamai, PerimeterX, or DataDome
                 - **Score Impact**: -15 points from Bot Access category
                 """)
@@ -589,44 +792,53 @@ def analyze_url(url: str, score_placeholder):
                 st.error("**Blocking Method**: Strict Bot Protection (All Automated Access Blocked)")
                 st.markdown("""
                 **Impact**: Site blocks ALL automated access including real browsers
-                - **Severity**: Extreme - Complete inaccessibility to AI crawlers
+                - **Severity**: Extreme — Complete inaccessibility to AI crawlers
                 - **Likely System**: Advanced WAF with strict fingerprinting
                 - **Score Impact**: -25 points from Bot Access category
                 """)
-            
+
             if used_fallback:
                 st.info("ℹ️ **Note**: Analysis completed using browser fallback method. Some checks may be limited.")
-            
-            st.markdown("---")
-        
-        # Display score at the top (in the placeholder)
+
+            st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:1rem 0">', unsafe_allow_html=True)
+
+        # Display score badge at the top (in the placeholder)
         with score_placeholder.container():
             display_score(results['scores'])
-            st.markdown("---")
-        
-        # Summary statistics
-        display_summary(results)
-        
-        st.markdown("---")
-        
-        # Category scores
+
+        # Summary strip
+        display_summary(results, url=url, elapsed=final_time)
+
+        # Category cards
         display_category_scores(results['scores'])
-        
-        st.markdown("---")
-        
+
+        st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:1rem 0">', unsafe_allow_html=True)
+
         # Detailed results
         display_detailed_results(results)
-        
-        # Failed checks summary
+
+        # Priority fixes as styled cards
         failed_checks = scorer.get_failed_checks()
         if failed_checks:
-            st.markdown("## 🔧 Priority Fixes")
-            st.warning(f"You have {len(failed_checks)} failed checks that need attention:")
-            for i, check in enumerate(failed_checks, 1):
-                st.markdown(f"**{i}. {check['name']}**")
-                st.markdown(f"   - Issue: {check['message']}")
+            fixes_html = ""
+            for check in failed_checks:
+                fix_text = f'<div class="fix-body"><strong>Issue:</strong> {check["message"]}'
                 if check['fix']:
-                    st.markdown(f"   - Fix: {check['fix']}")
+                    fix_text += f'<br><strong>Fix:</strong> {check["fix"]}'
+                fix_text += '</div>'
+                fixes_html += f"""
+                <div class="fix-card">
+                  <div class="fix-top">
+                    <span class="fix-title">{check['name']}</span>
+                    <span class="fix-badge crit">Critical</span>
+                  </div>
+                  {fix_text}
+                </div>"""
+
+            st.markdown(f"""
+            <div class="section-label">Priority Fixes</div>
+            {fixes_html}
+            """, unsafe_allow_html=True)
         
     except Exception as e:
         st.error(f"❌ An error occurred during analysis: {str(e)}")
@@ -636,50 +848,61 @@ def analyze_url(url: str, score_placeholder):
 def main():
     """Main application"""
     display_header()
-    
-    # URL input
-    url = st.text_input(
-        "Enter website URL to analyze:",
-        placeholder="https://example.com",
-        help="Enter the full URL including https://"
-    )
-    
-    # Analyze button
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        analyze_button = st.button("🔍 Analyze Website", type="primary", use_container_width=True)
-    
+
+    # ── Search bar (inside hero shelf styling) ──
+    st.markdown('<div class="geo-shelf">', unsafe_allow_html=True)
+
+    col_input, col_btn = st.columns([5, 1])
+    with col_input:
+        url = st.text_input(
+            label="URL",
+            label_visibility="collapsed",
+            placeholder="https://your-website.com",
+            help="Enter a full URL, domain, or brand name — e.g. example.com or just 'stripe'"
+        )
+    with col_btn:
+        analyze_button = st.button("Analyse →", type="primary", use_container_width=True)
+
+    # Example chips row
+    st.markdown("""
+    <div style="margin-top:0.5rem;margin-bottom:1rem;font-size:0.78rem;color:#8b6bbf;">
+      Try: &nbsp;
+      <span style="background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.18);
+        color:#5b21b6;padding:0.2rem 0.65rem;border-radius:20px;margin-right:0.3rem;">ibm.com</span>
+      <span style="background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.18);
+        color:#5b21b6;padding:0.2rem 0.65rem;border-radius:20px;margin-right:0.3rem;">openai.com</span>
+      <span style="background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.18);
+        color:#5b21b6;padding:0.2rem 0.65rem;border-radius:20px;margin-right:0.3rem;">bbc.co.uk</span>
+      <span style="background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.18);
+        color:#5b21b6;padding:0.2rem 0.65rem;border-radius:20px;margin-right:0.3rem;">stripe.com</span>
+      <span style="background:rgba(109,40,217,0.08);border:1px solid rgba(109,40,217,0.18);
+        color:#5b21b6;padding:0.2rem 0.65rem;border-radius:20px;">vercel.com</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # Create a placeholder for the score display (shown after analysis)
     score_placeholder = st.empty()
-    
+
     # Perform analysis
     if analyze_button:
         if not url:
             st.warning("⚠️ Please enter a URL or website name")
         else:
-            # Find best matching URL
             with st.spinner("🔍 Finding best URL match..."):
                 working_url, message = find_best_url_match(url)
-            
+
             if working_url is None:
-                # No URL found
                 st.error(message)
-                st.info("💡 **Tips:**")
-                st.markdown("""
-                - Enter a full domain: `example.com` or `www.example.com`
-                - Enter a brand name: `google`, `bbc`, `amazon`
-                - Include protocol if needed: `https://example.com`
-                """)
+                st.info("💡 **Tips:** Enter a full domain (`example.com`), a brand name (`stripe`), or include the protocol (`https://example.com`)")
             else:
-                # Show what URL was found if different from input
                 if message:
                     st.success(message)
-                
-                # Validate the URL
+
                 if not validators.url(working_url):
                     st.error("❌ Invalid URL format")
                 else:
-                    # Proceed with analysis
                     analyze_url(working_url, score_placeholder)
     
     # Information section
