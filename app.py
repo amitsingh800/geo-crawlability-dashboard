@@ -278,16 +278,17 @@ def display_score(scores):
     grade = scores['grade']
 
     if total_score >= 80:
-        css_class = "score-good"
+        bg, border = "#f0fdf4", "#bbf7d0"
     elif total_score >= 50:
-        css_class = "score-warning"
+        bg, border = "#fefce8", "#fde68a"
     else:
-        css_class = "score-critical"
+        bg, border = "#fff1f2", "#fecdd3"
 
     st.markdown(f"""
-    <div class="score-container {css_class}">
+    <div style="text-align:center;padding:1.5rem;border-radius:10px;margin:1.5rem 0;
+                background:{bg};border:1.5px solid {border};">
         <div style="font-size:1.1rem;color:#5b21b6;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Overall GEO Score</div>
-        <div class="score-number">{total_score}</div>
+        <div style="font-size:3.8rem;font-weight:800;margin:0.75rem 0;color:#2e1a47;">{total_score}</div>
         <div style="font-size:1.5rem;font-weight:800;color:#2e1a47;">Grade {grade}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -310,63 +311,93 @@ def _score_label(score: int) -> str:
 
 
 def display_category_scores(scores):
-    """Display category breakdown as styled cards"""
-    bot   = scores['bot_access']
+    """Display category breakdown as fully inline-styled cards"""
+    bot    = scores['bot_access']
     render = scores['renderability']
     struct = scores['structure']
 
-    def card(title, score, checks_html):
-        sc = _score_class(score)
-        lbl = _score_label(score)
+    def score_color(s):
+        if s >= 80: return "#16a34a"
+        if s >= 50: return "#d97706"
+        return "#dc2626"
+
+    def badge_style(s):
+        if s >= 80: return "background:#dcfce7;color:#166534;"
+        if s >= 50: return "background:#fef9c3;color:#854d0e;"
+        return "background:#fee2e2;color:#991b1b;"
+
+    def badge_label(s):
+        if s >= 80: return "Good"
+        if s >= 50: return "Needs Work"
+        return "Critical"
+
+    def card(title, score, detail):
         return f"""
-        <div class="cat-card">
-          <div class="cat-card-top">
-            <div class="cat-title">{title}</div>
-            <div class="cat-score {sc}">{score}</div>
+        <div style="background:white;border:1.5px solid #ddd6fe;border-radius:10px;padding:1.1rem;flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.7rem;">
+            <div style="font-size:0.83rem;font-weight:700;color:#2e1a47;max-width:72%;">{title}</div>
+            <div style="font-size:1.7rem;font-weight:800;line-height:1;color:{score_color(score)};">{score}</div>
           </div>
-          <span class="cat-badge {sc}">{lbl}</span>
-          <div class="cat-divider"></div>
-          <div class="check-list">{checks_html}</div>
+          <span style="display:inline-block;padding:0.16rem 0.6rem;border-radius:20px;
+                font-size:0.68rem;font-weight:700;margin-bottom:0.7rem;{badge_style(score)}">{badge_label(score)}</span>
+          <div style="height:1px;background:#ede9fe;margin:0.65rem 0;"></div>
+          <div style="font-size:0.79rem;color:#57606a;line-height:1.5;">{detail}</div>
         </div>"""
 
-    bot_checks   = '<div class="check-item"><span>🤖</span>robots.txt · meta robots · Cloudflare AI block</div>'
-    rend_checks  = '<div class="check-item"><span>🎨</span>JS dependency · paywall · login walls</div>'
-    struct_checks = '<div class="check-item"><span>📋</span>Schema.org · Open Graph · headings · sitemap · llms.txt</div>'
+    bot_detail    = "🤖 robots.txt · meta robots · Cloudflare AI block"
+    rend_detail   = "🎨 JS dependency · paywall · login walls"
+    struct_detail = "📋 Schema.org · Open Graph · headings · sitemap · llms.txt"
 
     st.markdown(f"""
-    <div class="section-label">Category Breakdown</div>
-    <div class="cat-grid">
-      {card("🚫 Bot Access · 40%",     bot,    bot_checks)}
-      {card("🎨 Renderability · 30%",  render, rend_checks)}
-      {card("📋 Structure &amp; Meta · 30%", struct, struct_checks)}
+    <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:1.5rem 0 0.9rem;">
+      Category Breakdown
+      <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+    </div>
+    <div style="display:flex;gap:0.9rem;margin-bottom:1rem;">
+      {card("🚫 Bot Access · 40%",          bot,    bot_detail)}
+      {card("🎨 Renderability · 30%",        render, rend_detail)}
+      {card("📋 Structure &amp; Meta · 30%", struct, struct_detail)}
     </div>
     """, unsafe_allow_html=True)
 
 
 def display_check_result(check):
     """Display a single check result"""
-    status = check['status']
-    name = check['name']
+    status  = check['status']
+    name    = check['name']
     message = check['message']
-    fix = check.get('fix')
+    fix     = check.get('fix')
 
     if status == 'pass':
-        icon = "✅"
-        css_class = "check-pass"
+        icon      = "✅"
+        color     = "#16a34a"
+        label     = "PASS"
     elif status == 'warn':
-        icon = "⚠️"
-        css_class = "check-warn"
+        icon      = "⚠️"
+        color     = "#d97706"
+        label     = "WARN"
     else:
-        icon = "❌"
-        css_class = "check-fail"
+        icon      = "❌"
+        color     = "#dc2626"
+        label     = "FAIL"
 
-    st.markdown(f"{icon} **{name}**: <span class='{css_class}'>{status.upper()}</span>", unsafe_allow_html=True)
+    st.markdown(
+        f"{icon} **{name}**: "
+        f"<span style='color:{color};font-weight:700;'>{label}</span>",
+        unsafe_allow_html=True
+    )
     st.markdown(f"_{message}_")
 
     if fix:
-        st.markdown(f'<div class="fix-suggestion">💡 Fix: {fix}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background:#f5f3ff;padding:0.5rem 0.75rem;border-left:3px solid #7c3aed;'
+            f'margin-top:0.5rem;font-style:italic;font-size:0.88rem;color:#3b1a5e;border-radius:0 6px 6px 0;">'
+            f'💡 Fix: {fix}</div>',
+            unsafe_allow_html=True
+        )
 
-    st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:0.6rem 0">', unsafe_allow_html=True)
+    st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:0.6rem 0;">', unsafe_allow_html=True)
 
 
 def display_detailed_results(results):
@@ -402,41 +433,61 @@ def display_detailed_results(results):
 
 
 def display_summary(results, url: str = "", elapsed: float = 0.0):
-    """Display summary strip with score badge + status pills"""
-    summary = results['summary']
-    scores  = results['scores']
-    total   = scores['total']
-    grade   = scores['grade']
-
+    """Display fully inline-styled summary strip"""
+    summary  = results['summary']
+    scores   = results['scores']
+    total    = scores['total']
+    grade    = scores['grade']
     passes   = summary['passes']
     warnings = summary['warnings']
     fails    = summary['fails']
 
-    elapsed_str = f"⚡ {elapsed:.1f}s" if elapsed else ""
+    pill = ("display:inline-flex;align-items:center;gap:0.35rem;"
+            "background:#f5f3ff;border:1px solid #ddd6fe;"
+            "border-radius:6px;padding:0.28rem 0.65rem;font-size:0.75rem;color:#2e1a47;")
+    dot  = "width:7px;height:7px;border-radius:50%;display:inline-block;"
+    elapsed_pill = (f'<span style="{pill}">⚡ {elapsed:.1f}s</span>' if elapsed else "")
 
     st.markdown(f"""
-    <div class="section-label">Analysis Summary</div>
-    <div class="summary-strip">
-      <div class="score-badge">
-        <span class="snum">{total}</span>
-        <span class="sgrade">Grade {grade}</span>
+    <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:1.5rem 0 0.9rem;">
+      Analysis Summary
+      <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:auto 1fr auto;gap:1.25rem;background:white;
+                border:1.5px solid #ddd6fe;border-radius:12px;padding:1.25rem 1.5rem;align-items:center;
+                margin-bottom:1.25rem;">
+
+      <div style="background:linear-gradient(135deg,#6d28d9,#4c1d95);border-radius:10px;
+                  width:82px;height:82px;display:flex;flex-direction:column;
+                  align-items:center;justify-content:center;flex-shrink:0;text-align:center;">
+        <span style="font-size:2.2rem;font-weight:800;line-height:1;color:#facc15;">{total}</span>
+        <span style="font-size:0.72rem;font-weight:700;color:rgba(224,210,255,0.88);">Grade {grade}</span>
       </div>
-      <div class="summary-body">
-        <h3>{url or "Analysis Complete"}</h3>
-        <p>Overall GEO crawlability score across bot access, renderability, and structure checks.</p>
-        <div class="status-row">
-          <span class="stat-pill"><span class="dot dot-crit"></span><strong>{fails} Critical</strong></span>
-          <span class="stat-pill"><span class="dot dot-warn"></span><strong>{warnings} Warnings</strong></span>
-          <span class="stat-pill"><span class="dot dot-good"></span><strong>{passes} Passed</strong></span>
-          {"<span class='stat-pill'>" + elapsed_str + "</span>" if elapsed_str else ""}
+
+      <div>
+        <div style="font-size:0.98rem;font-weight:700;margin-bottom:0.25rem;color:#2e1a47;">
+          {url or "Analysis Complete"}
+        </div>
+        <div style="font-size:0.86rem;color:#57606a;line-height:1.6;">
+          Overall GEO crawlability score across bot access, renderability, and structure checks.
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.7rem;">
+          <span style="{pill}"><span style="{dot}background:#dc2626;"></span><strong>{fails} Critical</strong></span>
+          <span style="{pill}"><span style="{dot}background:#d97706;"></span><strong>{warnings} Warnings</strong></span>
+          <span style="{pill}"><span style="{dot}background:#16a34a;"></span><strong>{passes} Passed</strong></span>
+          {elapsed_pill}
         </div>
       </div>
-      <div class="summary-meta">
-        <div><strong>Total checks:</strong> {summary['total_checks']}</div>
-        <div><strong>Bot Access:</strong> {scores['bot_access']}/100</div>
-        <div><strong>Renderability:</strong> {scores['renderability']}/100</div>
-        <div><strong>Structure:</strong> {scores['structure']}/100</div>
+
+      <div style="font-size:0.76rem;color:#57606a;text-align:right;display:flex;
+                  flex-direction:column;gap:0.22rem;white-space:nowrap;">
+        <div><strong style="color:#2e1a47;">Total checks:</strong> {summary['total_checks']}</div>
+        <div><strong style="color:#2e1a47;">Bot Access:</strong> {scores['bot_access']}/100</div>
+        <div><strong style="color:#2e1a47;">Renderability:</strong> {scores['renderability']}/100</div>
+        <div><strong style="color:#2e1a47;">Structure:</strong> {scores['structure']}/100</div>
       </div>
+
     </div>
     """, unsafe_allow_html=True)
 
@@ -821,22 +872,38 @@ def analyze_url(url: str, score_placeholder):
         failed_checks = scorer.get_failed_checks()
         if failed_checks:
             fixes_html = ""
+            card_style = ("background:white;border:1.5px solid #ddd6fe;"
+                          "border-left:4px solid #dc2626;border-radius:10px;"
+                          "padding:1.1rem 1.3rem;margin-bottom:0.8rem;")
+            top_style  = ("display:flex;justify-content:space-between;"
+                          "align-items:center;margin-bottom:0.45rem;gap:0.8rem;")
+            title_style = "font-size:0.9rem;font-weight:700;color:#2e1a47;"
+            badge_style = ("font-size:0.68rem;font-weight:700;padding:0.16rem 0.6rem;"
+                           "border-radius:20px;white-space:nowrap;flex-shrink:0;"
+                           "background:#fee2e2;color:#991b1b;")
+            body_style  = "font-size:0.84rem;color:#57606a;line-height:1.6;"
+
             for check in failed_checks:
-                fix_text = f'<div class="fix-body"><strong>Issue:</strong> {check["message"]}'
+                fix_line = ""
                 if check['fix']:
-                    fix_text += f'<br><strong>Fix:</strong> {check["fix"]}'
-                fix_text += '</div>'
+                    fix_line = f'<br><strong style="color:#2e1a47;">Fix:</strong> {check["fix"]}'
                 fixes_html += f"""
-                <div class="fix-card">
-                  <div class="fix-top">
-                    <span class="fix-title">{check['name']}</span>
-                    <span class="fix-badge crit">Critical</span>
+                <div style="{card_style}">
+                  <div style="{top_style}">
+                    <span style="{title_style}">{check['name']}</span>
+                    <span style="{badge_style}">Critical</span>
                   </div>
-                  {fix_text}
+                  <div style="{body_style}">
+                    <strong style="color:#2e1a47;">Issue:</strong> {check['message']}{fix_line}
+                  </div>
                 </div>"""
 
             st.markdown(f"""
-            <div class="section-label">Priority Fixes</div>
+            <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                        color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:1.5rem 0 0.9rem;">
+              Priority Fixes
+              <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+            </div>
             {fixes_html}
             """, unsafe_allow_html=True)
         
