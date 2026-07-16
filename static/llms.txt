@@ -1,0 +1,9 @@
+# GEO Crawlability Checker
+
+> Audit websites for AI crawler accessibility, metadata quality, structured data, and indexing readiness.
+
+## Pages
+- [Home](https://geo-crawlability.streamlit.app/): Main dashboard for crawlability analysis
+
+## Usage
+Content may be used for AI summarisation and citation with attribution.

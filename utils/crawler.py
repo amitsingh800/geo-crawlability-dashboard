@@ -121,17 +121,19 @@ class Crawler:
             Tuple of (sitemap content, error_message)
         """
         parsed = urlparse(base_url)
-        sitemap_url = f"{parsed.scheme}://{parsed.netloc}/sitemap.xml"
-        
-        content, response, error = self.fetch_url(sitemap_url, allow_redirects=False)
-        
-        if error:
-            return None, error
-        
-        if response and response.status_code == 404:
-            return None, "sitemap.xml not found (404)"
-        
-        return content, None
+        sitemap_urls = [
+            f"{parsed.scheme}://{parsed.netloc}/sitemap.xml",
+            f"{parsed.scheme}://{parsed.netloc}/app/static/sitemap.xml",
+        ]
+
+        for sitemap_url in sitemap_urls:
+            content, response, error = self.fetch_url(sitemap_url, allow_redirects=False)
+            if content and not error:
+                return content, None
+            if response and response.status_code != 404:
+                return None, error
+
+        return None, "sitemap.xml not found (404)"
     
     def fetch_llms_txt(self, base_url: str) -> Tuple[Optional[str], Optional[str]]:
         """
@@ -144,17 +146,19 @@ class Crawler:
             Tuple of (llms.txt content, error_message)
         """
         parsed = urlparse(base_url)
-        llms_url = f"{parsed.scheme}://{parsed.netloc}/llms.txt"
-        
-        content, response, error = self.fetch_url(llms_url, allow_redirects=False)
-        
-        if error:
-            return None, error
-        
-        if response and response.status_code == 404:
-            return None, "llms.txt not found (404)"
-        
-        return content, None
+        llms_urls = [
+            f"{parsed.scheme}://{parsed.netloc}/llms.txt",
+            f"{parsed.scheme}://{parsed.netloc}/app/static/llms.txt",
+        ]
+
+        for llms_url in llms_urls:
+            content, response, error = self.fetch_url(llms_url, allow_redirects=False)
+            if content and not error:
+                return content, None
+            if response and response.status_code != 404:
+                return None, error
+
+        return None, "llms.txt not found (404)"
     
     def get_response_headers(self, url: str) -> Tuple[Optional[Dict], Optional[str]]:
         """
