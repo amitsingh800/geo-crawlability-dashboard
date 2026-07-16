@@ -3,6 +3,7 @@ GEO Crawlability Dashboard - Main Streamlit Application
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import sys
 import os
 import time
@@ -272,6 +273,20 @@ def display_header():
     """, unsafe_allow_html=True)
 
 
+def _html_block(html: str, height: int = 120) -> None:
+    """Render HTML via components.html to bypass Streamlit's HTML sanitiser."""
+    components.html(
+        f"""<!DOCTYPE html><html><head><meta charset="utf-8">
+        <style>
+          * {{ margin:0; padding:0; box-sizing:border-box; }}
+          body {{ font-family:-apple-system,"Segoe UI",system-ui,sans-serif;
+                 background:transparent; color:#1f1035; }}
+        </style></head><body>{html}</body></html>""",
+        height=height,
+        scrolling=False
+    )
+
+
 def display_score(scores):
     """Display the overall score with traffic light indicator"""
     total_score = scores['total']
@@ -284,14 +299,13 @@ def display_score(scores):
     else:
         bg, border = "#fff1f2", "#fecdd3"
 
-    st.markdown(f"""
-    <div style="text-align:center;padding:1.5rem;border-radius:10px;margin:1.5rem 0;
+    _html_block(f"""
+    <div style="text-align:center;padding:1.4rem;border-radius:10px;
                 background:{bg};border:1.5px solid {border};">
-        <div style="font-size:1.1rem;color:#5b21b6;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Overall GEO Score</div>
-        <div style="font-size:3.8rem;font-weight:800;margin:0.75rem 0;color:#2e1a47;">{total_score}</div>
-        <div style="font-size:1.5rem;font-weight:800;color:#2e1a47;">Grade {grade}</div>
-    </div>
-    """, unsafe_allow_html=True)
+      <div style="font-size:1rem;color:#5b21b6;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Overall GEO Score</div>
+      <div style="font-size:3.6rem;font-weight:800;margin:0.5rem 0;color:#2e1a47;">{total_score}</div>
+      <div style="font-size:1.4rem;font-weight:800;color:#2e1a47;">Grade {grade}</div>
+    </div>""", height=160)
 
 
 def _score_class(score: int) -> str:
@@ -333,13 +347,18 @@ def display_category_scores(scores):
 
     def card(title, score, detail):
         return f"""
-        <div style="background:white;border:1.5px solid #ddd6fe;border-radius:10px;padding:1.1rem;flex:1;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.7rem;">
-            <div style="font-size:0.83rem;font-weight:700;color:#2e1a47;max-width:72%;">{title}</div>
-            <div style="font-size:1.7rem;font-weight:800;line-height:1;color:{score_color(score)};">{score}</div>
+        <div style="background:white;border:1.5px solid #ddd6fe;border-radius:10px;
+                    padding:1.1rem;flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;
+                      align-items:flex-start;margin-bottom:0.7rem;">
+            <div style="font-size:0.83rem;font-weight:700;color:#2e1a47;
+                        max-width:72%;line-height:1.3;">{title}</div>
+            <div style="font-size:1.7rem;font-weight:800;line-height:1;
+                        color:{score_color(score)};flex-shrink:0;">{score}</div>
           </div>
           <span style="display:inline-block;padding:0.16rem 0.6rem;border-radius:20px;
-                font-size:0.68rem;font-weight:700;margin-bottom:0.7rem;{badge_style(score)}">{badge_label(score)}</span>
+                       font-size:0.68rem;font-weight:700;margin-bottom:0.7rem;
+                       {badge_style(score)}">{badge_label(score)}</span>
           <div style="height:1px;background:#ede9fe;margin:0.65rem 0;"></div>
           <div style="font-size:0.79rem;color:#57606a;line-height:1.5;">{detail}</div>
         </div>"""
@@ -348,18 +367,17 @@ def display_category_scores(scores):
     rend_detail   = "🎨 JS dependency · paywall · login walls"
     struct_detail = "📋 Schema.org · Open Graph · headings · sitemap · llms.txt"
 
-    st.markdown(f"""
+    _html_block(f"""
     <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
-                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:1.5rem 0 0.9rem;">
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
       Category Breakdown
       <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
     </div>
-    <div style="display:flex;gap:0.9rem;margin-bottom:1rem;">
+    <div style="display:flex;gap:0.9rem;">
       {card("🚫 Bot Access · 40%",          bot,    bot_detail)}
       {card("🎨 Renderability · 30%",        render, rend_detail)}
       {card("📋 Structure &amp; Meta · 30%", struct, struct_detail)}
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", height=210)
 
 
 def display_check_result(check):
@@ -433,7 +451,7 @@ def display_detailed_results(results):
 
 
 def display_summary(results, url: str = "", elapsed: float = 0.0):
-    """Display fully inline-styled summary strip"""
+    """Display fully inline-styled summary strip via components.html"""
     summary  = results['summary']
     scores   = results['scores']
     total    = scores['total']
@@ -448,15 +466,15 @@ def display_summary(results, url: str = "", elapsed: float = 0.0):
     dot  = "width:7px;height:7px;border-radius:50%;display:inline-block;"
     elapsed_pill = (f'<span style="{pill}">⚡ {elapsed:.1f}s</span>' if elapsed else "")
 
-    st.markdown(f"""
+    _html_block(f"""
     <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
-                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:1.5rem 0 0.9rem;">
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
       Analysis Summary
       <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
     </div>
     <div style="display:grid;grid-template-columns:auto 1fr auto;gap:1.25rem;background:white;
-                border:1.5px solid #ddd6fe;border-radius:12px;padding:1.25rem 1.5rem;align-items:center;
-                margin-bottom:1.25rem;">
+                border:1.5px solid #ddd6fe;border-radius:12px;padding:1.25rem 1.5rem;
+                align-items:center;">
 
       <div style="background:linear-gradient(135deg,#6d28d9,#4c1d95);border-radius:10px;
                   width:82px;height:82px;display:flex;flex-direction:column;
@@ -470,7 +488,7 @@ def display_summary(results, url: str = "", elapsed: float = 0.0):
           {url or "Analysis Complete"}
         </div>
         <div style="font-size:0.86rem;color:#57606a;line-height:1.6;">
-          Overall GEO crawlability score across bot access, renderability, and structure checks.
+          GEO crawlability score across bot access, renderability, and structure checks.
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.7rem;">
           <span style="{pill}"><span style="{dot}background:#dc2626;"></span><strong>{fails} Critical</strong></span>
@@ -480,16 +498,15 @@ def display_summary(results, url: str = "", elapsed: float = 0.0):
         </div>
       </div>
 
-      <div style="font-size:0.76rem;color:#57606a;text-align:right;display:flex;
-                  flex-direction:column;gap:0.22rem;white-space:nowrap;">
-        <div><strong style="color:#2e1a47;">Total checks:</strong> {summary['total_checks']}</div>
+      <div style="font-size:0.76rem;color:#57606a;text-align:right;
+                  display:flex;flex-direction:column;gap:0.22rem;white-space:nowrap;">
+        <div><strong style="color:#2e1a47;">Total:</strong> {summary['total_checks']} checks</div>
         <div><strong style="color:#2e1a47;">Bot Access:</strong> {scores['bot_access']}/100</div>
         <div><strong style="color:#2e1a47;">Renderability:</strong> {scores['renderability']}/100</div>
         <div><strong style="color:#2e1a47;">Structure:</strong> {scores['structure']}/100</div>
       </div>
 
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", height=175)
 
 
 def find_best_url_match(user_input: str) -> Tuple[Optional[str], Optional[str]]:
@@ -872,40 +889,39 @@ def analyze_url(url: str, score_placeholder):
         failed_checks = scorer.get_failed_checks()
         if failed_checks:
             fixes_html = ""
-            card_style = ("background:white;border:1.5px solid #ddd6fe;"
-                          "border-left:4px solid #dc2626;border-radius:10px;"
-                          "padding:1.1rem 1.3rem;margin-bottom:0.8rem;")
-            top_style  = ("display:flex;justify-content:space-between;"
-                          "align-items:center;margin-bottom:0.45rem;gap:0.8rem;")
-            title_style = "font-size:0.9rem;font-weight:700;color:#2e1a47;"
-            badge_style = ("font-size:0.68rem;font-weight:700;padding:0.16rem 0.6rem;"
-                           "border-radius:20px;white-space:nowrap;flex-shrink:0;"
-                           "background:#fee2e2;color:#991b1b;")
-            body_style  = "font-size:0.84rem;color:#57606a;line-height:1.6;"
-
             for check in failed_checks:
                 fix_line = ""
                 if check['fix']:
-                    fix_line = f'<br><strong style="color:#2e1a47;">Fix:</strong> {check["fix"]}'
+                    fix_line = (f'<div style="margin-top:0.4rem;font-size:0.84rem;color:#57606a;">'
+                                f'<strong style="color:#2e1a47;">Fix:</strong> {check["fix"]}</div>')
                 fixes_html += f"""
-                <div style="{card_style}">
-                  <div style="{top_style}">
-                    <span style="{title_style}">{check['name']}</span>
-                    <span style="{badge_style}">Critical</span>
+                <div style="background:white;border:1.5px solid #ddd6fe;
+                            border-left:4px solid #dc2626;border-radius:10px;
+                            padding:1.1rem 1.3rem;margin-bottom:0.8rem;">
+                  <div style="display:flex;justify-content:space-between;
+                              align-items:center;margin-bottom:0.45rem;gap:0.8rem;">
+                    <span style="font-size:0.9rem;font-weight:700;color:#2e1a47;">
+                      {check['name']}
+                    </span>
+                    <span style="font-size:0.68rem;font-weight:700;padding:0.16rem 0.6rem;
+                                 border-radius:20px;white-space:nowrap;flex-shrink:0;
+                                 background:#fee2e2;color:#991b1b;">Critical</span>
                   </div>
-                  <div style="{body_style}">
-                    <strong style="color:#2e1a47;">Issue:</strong> {check['message']}{fix_line}
+                  <div style="font-size:0.84rem;color:#57606a;line-height:1.6;">
+                    <strong style="color:#2e1a47;">Issue:</strong> {check['message']}
                   </div>
+                  {fix_line}
                 </div>"""
 
-            st.markdown(f"""
-            <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
-                        color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:1.5rem 0 0.9rem;">
+            card_height = 140 * len(failed_checks) + 60
+            _html_block(f"""
+            <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;
+                        text-transform:uppercase;color:#5b21b6;display:flex;
+                        align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
               Priority Fixes
               <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
             </div>
-            {fixes_html}
-            """, unsafe_allow_html=True)
+            {fixes_html}""", height=card_height)
         
     except Exception as e:
         st.error(f"❌ An error occurred during analysis: {str(e)}")
