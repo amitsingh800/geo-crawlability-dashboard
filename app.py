@@ -29,6 +29,23 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+st.html("""
+<title>GEO Crawlability Checker | AI Crawler SEO Audit</title>
+<meta name="description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
+<meta property="og:title" content="GEO Crawlability Checker | AI Crawler SEO Audit">
+<meta property="og:description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
+<meta property="og:url" content="https://geo-crawlability-dashboard.streamlit.app/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "GEO Crawlability Checker",
+  "url": "https://geo-crawlability-dashboard.streamlit.app/",
+  "description": "Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools."
+}
+</script>
+""")
+
 # Custom CSS for better styling
 st.markdown("""
 <style>
@@ -97,8 +114,8 @@ st.markdown("""
 
 def display_header():
     """Display the main header"""
-    st.markdown('<div class="main-header">🤖 GEO Crawlability Checker</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Analyze your website\'s accessibility to AI crawlers</div>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🤖 GEO Crawlability Checker</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Analyze your website\'s accessibility to AI crawlers</p>', unsafe_allow_html=True)
 
 
 def display_score(scores):
@@ -178,7 +195,7 @@ def display_detailed_results(results):
     st.markdown("## 📊 Detailed Results")
     
     # Bot Access Checks
-    with st.expander("🚫 Bot Access Checks", expanded=True):
+    with st.expander("## 🚫 Bot Access Checks", expanded=True):
         checks = results['checks']['bot_access']
         if checks:
             for check in checks:
@@ -187,7 +204,7 @@ def display_detailed_results(results):
             st.info("No bot access checks performed")
     
     # Renderability Checks
-    with st.expander("🎨 Renderability Checks", expanded=True):
+    with st.expander("## 🎨 Renderability Checks", expanded=True):
         checks = results['checks']['renderability']
         if checks:
             for check in checks:
@@ -196,7 +213,7 @@ def display_detailed_results(results):
             st.info("No renderability checks performed")
     
     # Structure Checks
-    with st.expander("📋 Structure & Metadata Checks", expanded=True):
+    with st.expander("## 📋 Structure & Metadata Checks", expanded=True):
         checks = results['checks']['structure']
         if checks:
             for check in checks:
@@ -668,7 +685,7 @@ def main():
     # Information section
     with st.expander("ℹ️ About This Tool"):
         st.markdown("""
-        ### What does this tool check?
+        ## What does this tool check?
 
         **Bot Access (40% weight)**
         - robots.txt restrictions for AI bots
@@ -710,7 +727,7 @@ def main():
 
     with st.expander("💡 Quick Wins to Improve Your Score"):
         st.markdown("""
-        ### Top actions to maximise AI crawlability
+        ## Top actions to maximise AI crawlability
 
         1. **Allow all AI bots in robots.txt** — ensure no `Disallow: /` for GPTBot, ClaudeBot, etc.
         2. **Create /llms.txt** — a plain-text summary of your site ([spec](https://llmstxt.org))
