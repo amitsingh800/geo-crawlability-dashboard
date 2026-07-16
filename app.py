@@ -34,13 +34,13 @@ st.html("""
 <meta name="description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
 <meta property="og:title" content="GEO Crawlability Checker | AI Crawler SEO Audit">
 <meta property="og:description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
-<meta property="og:url" content="https://geo-crawlability-dashboard.streamlit.app/">
+<meta property="og:url" content="https://geo-crawlability.streamlit.app/">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "GEO Crawlability Checker",
-  "url": "https://geo-crawlability-dashboard.streamlit.app/",
+  "url": "https://geo-crawlability.streamlit.app/",
   "description": "Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools."
 }
 </script>
