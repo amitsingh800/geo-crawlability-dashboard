@@ -577,13 +577,12 @@ def find_best_url_match(user_input: str) -> Tuple[Optional[str], Optional[str]]:
     return None, f"❌ Could not find a working website for '{user_input}'. Please enter a valid domain."
 
 
-def analyze_url(url: str, score_placeholder):
+def analyze_url(url: str):
     """
     Main analysis function
 
     Args:
         url: URL to analyze
-        score_placeholder: Streamlit placeholder for displaying score at top
     """
     # Initialize components
     crawler = Crawler()
@@ -689,11 +688,9 @@ def analyze_url(url: str, score_placeholder):
                     - **Score Impact**: Maximum penalty - site is completely inaccessible
                     """)
                     
-                    # Display partial score at the top (in the placeholder)
-                    with score_placeholder.container():
-                        display_score(results['scores'])
-                        st.markdown("---")
-                    
+                    # Show partial score
+                    display_score(results['scores'])
+
                     st.markdown("### ❌ Checks That Could Not Be Performed")
                     st.error("""
                     Due to bot protection blocking, the following could not be analyzed:
@@ -870,19 +867,13 @@ def analyze_url(url: str, score_placeholder):
 
             st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:1rem 0">', unsafe_allow_html=True)
 
-        # Display score badge at the top (in the placeholder)
-        with score_placeholder.container():
-            display_score(results['scores'])
-
-        # Summary strip
+        # Summary strip (includes score badge — no separate score card needed)
         display_summary(results, url=url, elapsed=final_time)
 
         # Category cards
         display_category_scores(results['scores'])
 
-        st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:1rem 0">', unsafe_allow_html=True)
-
-        # Detailed results
+        # Detailed check results inside expanders
         display_detailed_results(results)
 
         # Priority fixes as styled cards
@@ -965,9 +956,6 @@ def main():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Create a placeholder for the score display (shown after analysis)
-    score_placeholder = st.empty()
-
     # Perform analysis
     if analyze_button:
         if not url:
@@ -986,7 +974,7 @@ def main():
                 if not validators.url(working_url):
                     st.error("❌ Invalid URL format")
                 else:
-                    analyze_url(working_url, score_placeholder)
+                    analyze_url(working_url)
     
     # Information section
     with st.expander("ℹ️ About This Tool"):
