@@ -86,7 +86,7 @@ class CrawlabilityScorer:
         )
         
         return {
-            'total': round(total_score, 1),
+            'total': round(total_score),
             'bot_access': bot_access_score,
             'renderability': renderability_score,
             'structure': structure_score,

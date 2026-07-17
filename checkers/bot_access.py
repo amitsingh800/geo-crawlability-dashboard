@@ -92,12 +92,15 @@ class BotAccessChecker:
                 None
             )
         else:
+            from urllib.parse import urlparse
+            parsed = urlparse(self.base_url)
+            sitemap_url = f"{parsed.scheme}://{parsed.netloc}/sitemap.xml"
             scorer.add_check(
                 'bot_access',
                 'Sitemap Reference',
-                'warn',
-                'No sitemap reference in robots.txt',
-                'Add "Sitemap: https://yourdomain.com/sitemap.xml" to robots.txt'
+                'pass',
+                'No sitemap reference in robots.txt — not required, but recommended',
+                f'Optionally add "Sitemap: {sitemap_url}" to robots.txt to help crawlers discover pages faster'
             )
 
         # Check Crawl-delay — a high delay throttles AI crawlers significantly
