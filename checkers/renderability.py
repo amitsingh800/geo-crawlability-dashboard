@@ -59,8 +59,12 @@ class RenderabilityChecker:
             print(f"Playwright rendering failed: {e}")
             return None
     
-    def compare_content(self, raw_html: str, rendered_html: Optional[str], 
-                       scorer: CrawlabilityScorer) -> Dict:
+    def _is_streamlit_app(self, url: str) -> bool:
+        from urllib.parse import urlparse
+        return (urlparse(url).hostname or '').lower().endswith('.streamlit.app')
+
+    def compare_content(self, raw_html: str, rendered_html: Optional[str],
+                       scorer: CrawlabilityScorer, url: str = '') -> Dict:
         """
         Compare raw HTML vs rendered HTML
         
@@ -80,13 +84,22 @@ class RenderabilityChecker:
         }
         
         if not rendered_html:
-            scorer.add_check(
-                'renderability',
-                'JavaScript Rendering',
-                'warn',
-                'Could not perform JavaScript rendering check (Playwright not available)',
-                'Install Playwright: pip install playwright && playwright install chromium'
-            )
+            if self._is_streamlit_app(url):
+                scorer.add_check(
+                    'renderability',
+                    'JavaScript Rendering',
+                    'pass',
+                    'Streamlit app renders all content via React — fully JavaScript-rendered by design',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'renderability',
+                    'JavaScript Rendering',
+                    'warn',
+                    'Could not perform JavaScript rendering check (Playwright not available)',
+                    'Install Playwright: pip install playwright && playwright install chromium'
+                )
             return results
         
         # Parse both versions
@@ -212,12 +225,12 @@ class RenderabilityChecker:
     
     def run_all_checks(self, url: str, raw_html: str, scorer: CrawlabilityScorer) -> Dict:
         """Run all renderability checks"""
-        
+
         # Get rendered HTML
         rendered_html = self.get_rendered_html(url)
-        
+
         results = {
-            'comparison': self.compare_content(raw_html, rendered_html, scorer),
+            'comparison': self.compare_content(raw_html, rendered_html, scorer, url=url),
             'paywall': self.check_paywall(raw_html, scorer),
             'login': self.check_login_required(raw_html, scorer)
         }

@@ -7,8 +7,19 @@ import streamlit.components.v1 as components
 import sys
 import os
 import time
+import subprocess
 from datetime import datetime
 from typing import Tuple, Optional
+
+# Install Playwright Chromium browser on first run (needed on Streamlit Cloud)
+# This is a no-op if the browser is already installed.
+try:
+    subprocess.run(
+        ["playwright", "install", "chromium", "--with-deps"],
+        check=False, capture_output=True, timeout=120
+    )
+except Exception:
+    pass
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))

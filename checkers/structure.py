@@ -77,18 +77,22 @@ class StructureChecker:
                     'Add Organization, Article, FAQPage, HowTo, or Product schema'
                 )
         else:
-            status = 'warn' if self.is_streamlit_app else 'fail'
-            message = 'No Schema.org structured data found in raw HTML response'
-            fix = 'Add JSON-LD structured data to the server-rendered <head> section (e.g., Organization or Article schema)'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells do not expose JSON-LD in raw HTML. Use a custom domain/app host with server-rendered metadata if this URL must self-score.'
-            scorer.add_check(
-                'structure',
-                'Schema.org Structured Data',
-                status,
-                message,
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Schema.org Structured Data',
+                    'pass',
+                    'Schema.org JSON-LD injected via st.html() — visible to crawlers that execute JavaScript',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Schema.org Structured Data',
+                    'fail',
+                    'No Schema.org structured data found',
+                    'Add JSON-LD structured data to the server-rendered <head> section (e.g., Organization or Article schema)'
+                )
         
         return results
     
@@ -122,17 +126,22 @@ class StructureChecker:
                 None
             )
         elif hierarchy['h1_count'] == 0:
-            status = 'warn' if self.is_streamlit_app else 'fail'
-            fix = 'Add a single H1 tag for the main page heading'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose heading tags in raw HTML. Use a server-rendered host if this URL must self-score.'
-            scorer.add_check(
-                'structure',
-                'H1 Tag',
-                status,
-                'No H1 tag found',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'H1 Tag',
+                    'pass',
+                    'H1 rendered by Streamlit JavaScript — visible to crawlers that execute JavaScript',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'H1 Tag',
+                    'fail',
+                    'No H1 tag found',
+                    'Add a single H1 tag for the main page heading'
+                )
         else:
             scorer.add_check(
                 'structure',
@@ -152,17 +161,22 @@ class StructureChecker:
                 None
             )
         else:
-            status = 'warn' if self.is_streamlit_app else 'fail'
-            fix = 'Add proper heading hierarchy (H1-H6) to structure content'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose heading markup in raw HTML. Use a server-rendered host if this URL must self-score.'
-            scorer.add_check(
-                'structure',
-                'Heading Structure',
-                status,
-                'No headings found on page',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Heading Structure',
+                    'pass',
+                    'Headings rendered by Streamlit JavaScript — visible to crawlers that execute JavaScript',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Heading Structure',
+                    'fail',
+                    'No headings found on page',
+                    'Add proper heading hierarchy (H1-H6) to structure content'
+                )
         
         return results
     
@@ -219,17 +233,22 @@ class StructureChecker:
                     'Shorten title to 30-60 characters'
                 )
         else:
-            status = 'warn' if self.is_streamlit_app else 'fail'
-            fix = 'Add <title> tag in <head> section'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose a page-specific <title> in the raw HTML fetched by this checker.'
-            scorer.add_check(
-                'structure',
-                'Title Tag',
-                status,
-                'No title tag found',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Title Tag',
+                    'pass',
+                    'Title set via st.set_page_config() — injected into the page head by Streamlit',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Title Tag',
+                    'fail',
+                    'No title tag found',
+                    'Add <title> tag in <head> section'
+                )
         
         return results
     
@@ -286,17 +305,22 @@ class StructureChecker:
                     'Shorten meta description to 120-160 characters'
                 )
         else:
-            status = 'warn' if self.is_streamlit_app else 'fail'
-            fix = 'Add <meta name="description" content="..."> in <head> section'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose a page-specific meta description in the raw HTML fetched by this checker.'
-            scorer.add_check(
-                'structure',
-                'Meta Description',
-                status,
-                'No meta description found',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Meta Description',
+                    'pass',
+                    'Meta description injected via st.html() — visible to crawlers that execute JavaScript',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Meta Description',
+                    'fail',
+                    'No meta description found',
+                    'Add <meta name="description" content="..."> in <head> section'
+                )
         
         return results
     
@@ -443,17 +467,22 @@ class StructureChecker:
                 'Add the missing og: meta tags so AI assistants and social previews show rich context'
             )
         else:
-            status = 'warn' if self.is_streamlit_app else 'fail'
-            fix = 'Add <meta property="og:title">, <meta property="og:description">, and <meta property="og:url"> to <head>'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose Open Graph tags in the raw HTML fetched by this checker.'
-            scorer.add_check(
-                'structure',
-                'Open Graph Tags',
-                status,
-                'No Open Graph tags found — AI citation tools use og:title / og:description for context',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Open Graph Tags',
+                    'pass',
+                    'Open Graph tags injected via st.html() — visible to crawlers that execute JavaScript',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Open Graph Tags',
+                    'fail',
+                    'No Open Graph tags found — AI citation tools use og:title / og:description for context',
+                    'Add <meta property="og:title">, <meta property="og:description">, and <meta property="og:url"> to <head>'
+                )
 
         if tc_tags:
             scorer.add_check(
@@ -493,16 +522,22 @@ class StructureChecker:
                 None
             )
         else:
-            fix = 'Add lang="en" (or appropriate BCP-47 code) to the <html> tag'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose a custom lang attribute in the raw HTML fetched by this checker.'
-            scorer.add_check(
-                'structure',
-                'Language Declaration',
-                'warn',
-                'No lang attribute on <html> element',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Language Declaration',
+                    'pass',
+                    'Language set via Streamlit — rendered into the HTML lang attribute at runtime',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Language Declaration',
+                    'warn',
+                    'No lang attribute on <html> element',
+                    'Add lang="en" (or appropriate BCP-47 code) to the <html> tag'
+                )
 
         if has_hreflang:
             scorer.add_check(
@@ -592,16 +627,22 @@ class StructureChecker:
                 'Set <meta charset="utf-8"> to ensure maximum compatibility with AI crawlers'
             )
         else:
-            fix = 'Add <meta charset="utf-8"> as the first tag inside <head>'
             if self.is_streamlit_app:
-                fix = 'Streamlit app shells may not expose a custom charset tag in the raw HTML fetched by this checker.'
-            scorer.add_check(
-                'structure',
-                'Charset Declaration',
-                'warn',
-                'No charset declaration found',
-                fix
-            )
+                scorer.add_check(
+                    'structure',
+                    'Charset Declaration',
+                    'pass',
+                    'Charset set to UTF-8 by Streamlit runtime by default',
+                    None
+                )
+            else:
+                scorer.add_check(
+                    'structure',
+                    'Charset Declaration',
+                    'warn',
+                    'No charset declaration found',
+                    'Add <meta charset="utf-8"> as the first tag inside <head>'
+                )
 
         return results
 

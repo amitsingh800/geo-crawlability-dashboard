@@ -89,26 +89,21 @@ class Crawler:
     
     def fetch_robots_txt(self, base_url: str) -> Tuple[Optional[str], Optional[str]]:
         """
-        Fetch robots.txt for a given base URL
-        
-        Args:
-            base_url: Base URL of the website
-            
-        Returns:
-            Tuple of (robots.txt content, error_message)
+        Fetch robots.txt for a given base URL.
+        Tries /robots.txt first, then /app/static/robots.txt for Streamlit Cloud apps.
         """
         parsed = urlparse(base_url)
-        robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
-        
-        content, response, error = self.fetch_url(robots_url, allow_redirects=False)
-        
-        if error:
-            return None, error
-        
-        if response and response.status_code == 404:
-            return None, "robots.txt not found (404)"
-        
-        return content, None
+        candidates = [
+            f"{parsed.scheme}://{parsed.netloc}/robots.txt",
+            f"{parsed.scheme}://{parsed.netloc}/app/static/robots.txt",
+        ]
+
+        for robots_url in candidates:
+            content, response, error = self.fetch_url(robots_url, allow_redirects=True)
+            if content and not error and response and response.status_code == 200:
+                return content, None
+
+        return None, "robots.txt not found"
     
     def fetch_sitemap(self, base_url: str) -> Tuple[Optional[str], Optional[str]]:
         """
