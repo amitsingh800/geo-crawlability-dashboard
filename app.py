@@ -308,64 +308,131 @@ def display_score(scores):
     </div>""", height=160)
 
 
-def _score_class(score: int) -> str:
-    if score >= 80:
-        return "good"
-    elif score >= 50:
-        return "warn"
-    return "crit"
+def _score_color(s):
+    if s >= 80: return "#16a34a"
+    if s >= 50: return "#d97706"
+    return "#dc2626"
 
+def _badge_style(s):
+    if s >= 80: return "background:#dcfce7;color:#166534;"
+    if s >= 50: return "background:#fef9c3;color:#854d0e;"
+    return "background:#fee2e2;color:#991b1b;"
 
-def _score_label(score: int) -> str:
-    if score >= 80:
-        return "Good"
-    elif score >= 50:
-        return "Needs Work"
+def _badge_label(s):
+    if s >= 80: return "Good"
+    if s >= 50: return "Needs Work"
     return "Critical"
 
+def _cat_card(title, score, checks_html):
+    """Render one category card as HTML string."""
+    return f"""
+    <div style="background:white;border:1.5px solid #ddd6fe;border-radius:10px;padding:1.1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6rem;">
+        <div style="font-size:0.83rem;font-weight:700;color:#2e1a47;line-height:1.3;max-width:74%;">{title}</div>
+        <div style="font-size:1.75rem;font-weight:800;line-height:1;color:{_score_color(score)};flex-shrink:0;">{score}</div>
+      </div>
+      <span style="display:inline-block;padding:0.15rem 0.6rem;border-radius:20px;
+                   font-size:0.68rem;font-weight:700;margin-bottom:0.65rem;{_badge_style(score)}">{_badge_label(score)}</span>
+      <div style="height:1px;background:#ede9fe;margin:0.6rem 0;"></div>
+      <div style="font-size:0.79rem;color:#57606a;line-height:1.5;">{checks_html}</div>
+    </div>"""
 
-def display_category_scores(scores):
-    """Display category breakdown as fully inline-styled cards"""
-    bot    = scores['bot_access']
-    render = scores['renderability']
-    struct = scores['structure']
 
-    def score_color(s):
-        if s >= 80: return "#16a34a"
-        if s >= 50: return "#d97706"
-        return "#dc2626"
+def _check_row(icon, text):
+    return f'<div style="display:flex;gap:0.35rem;margin:0.25rem 0;">{icon} {text}</div>'
 
-    def badge_style(s):
-        if s >= 80: return "background:#dcfce7;color:#166534;"
-        if s >= 50: return "background:#fef9c3;color:#854d0e;"
-        return "background:#fee2e2;color:#991b1b;"
 
-    def badge_label(s):
-        if s >= 80: return "Good"
-        if s >= 50: return "Needs Work"
-        return "Critical"
+def display_category_scores(results):
+    """Render 6 wireframe-style category cards split from the 3 real checker categories."""
+    scores = results['scores']
+    checks = results['checks']
 
-    def card(title, score, detail):
-        return f"""
-        <div style="background:white;border:1.5px solid #ddd6fe;border-radius:10px;
-                    padding:1.1rem;flex:1;min-width:0;">
-          <div style="display:flex;justify-content:space-between;
-                      align-items:flex-start;margin-bottom:0.7rem;">
-            <div style="font-size:0.83rem;font-weight:700;color:#2e1a47;
-                        max-width:72%;line-height:1.3;">{title}</div>
-            <div style="font-size:1.7rem;font-weight:800;line-height:1;
-                        color:{score_color(score)};flex-shrink:0;">{score}</div>
-          </div>
-          <span style="display:inline-block;padding:0.16rem 0.6rem;border-radius:20px;
-                       font-size:0.68rem;font-weight:700;margin-bottom:0.7rem;
-                       {badge_style(score)}">{badge_label(score)}</span>
-          <div style="height:1px;background:#ede9fe;margin:0.65rem 0;"></div>
-          <div style="font-size:0.79rem;color:#57606a;line-height:1.5;">{detail}</div>
-        </div>"""
+    # ── Derive per-card scores from real check results ──────────────────────
+    def subscore(check_list, names):
+        """Score a subset of checks by name substring match."""
+        matched = [c for c in check_list if any(n.lower() in c['name'].lower() for n in names)]
+        if not matched:
+            return None
+        passes = sum(1 for c in matched if c['status'] == 'pass')
+        warns  = sum(1 for c in matched if c['status'] == 'warn')
+        return round((passes + warns * 0.5) / len(matched) * 100)
 
-    bot_detail    = "🤖 robots.txt · meta robots · Cloudflare AI block"
-    rend_detail   = "🎨 JS dependency · paywall · login walls"
-    struct_detail = "📋 Schema.org · Open Graph · headings · sitemap · llms.txt"
+    def all_score(check_list):
+        if not check_list: return 50
+        passes = sum(1 for c in check_list if c['status'] == 'pass')
+        warns  = sum(1 for c in check_list if c['status'] == 'warn')
+        return round((passes + warns * 0.5) / len(check_list) * 100)
+
+    bot_checks    = checks.get('bot_access', [])
+    rend_checks   = checks.get('renderability', [])
+    struct_checks = checks.get('structure', [])
+
+    # Card 1 — AI Crawler Access (robots.txt, meta robots, cloudflare)
+    ai_crawler_checks = [c for c in bot_checks if any(k in c['name'].lower()
+        for k in ['robot', 'crawl', 'bot', 'gpt', 'claude', 'google', 'perplexity', 'cloudflare', 'blocking', 'detection'])]
+    ai_crawler_score = all_score(ai_crawler_checks) if ai_crawler_checks else scores['bot_access']
+
+    # Card 2 — Structured Data (schema, og, twitter, canonical)
+    schema_checks = [c for c in struct_checks if any(k in c['name'].lower()
+        for k in ['schema', 'structured', 'json', 'open graph', 'og:', 'twitter', 'canonical'])]
+    schema_score = all_score(schema_checks) if schema_checks else round(scores['structure'] * 0.4)
+
+    # Card 3 — Sitemap & Discovery (sitemap, llms.txt, lang, charset)
+    sitemap_checks = [c for c in struct_checks if any(k in c['name'].lower()
+        for k in ['sitemap', 'llms', 'lang', 'charset', 'encoding', 'hreflang'])]
+    sitemap_score = all_score(sitemap_checks) if sitemap_checks else round(scores['structure'] * 0.6)
+
+    # Card 4 — Performance (renderability)
+    perf_score = scores['renderability']
+
+    # Card 5 — Content Citability (headings, title, meta desc, h1)
+    content_checks = [c for c in struct_checks if any(k in c['name'].lower()
+        for k in ['heading', 'title', 'description', 'h1', 'h2', 'content'])]
+    content_score = all_score(content_checks) if content_checks else round(scores['structure'] * 0.5)
+
+    # Card 6 — Internationalisation (lang, charset, hreflang)
+    intl_checks = [c for c in struct_checks if any(k in c['name'].lower()
+        for k in ['lang', 'charset', 'encoding', 'hreflang', 'international'])]
+    intl_score = all_score(intl_checks) if intl_checks else round(scores['structure'] * 0.7)
+
+    # ── Build check-item HTML for each card ─────────────────────────────────
+    def checks_html(check_list):
+        if not check_list:
+            return '<div style="color:#aaa;font-size:0.78rem;">No checks available</div>'
+        rows = []
+        for c in check_list[:4]:  # show up to 4 items per card
+            icon = "✅" if c['status'] == 'pass' else ("⚠️" if c['status'] == 'warn' else "❌")
+            rows.append(_check_row(icon, c['name']))
+        return "".join(rows)
+
+    # Fallback check lists for cards with no matched checks
+    def fallback(category_checks, keyword_groups):
+        result = []
+        for group in keyword_groups:
+            matched = [c for c in category_checks if any(k in c['name'].lower() for k in group)]
+            result.extend(matched)
+        return result if result else category_checks[:3]
+
+    ai_html      = checks_html(ai_crawler_checks or bot_checks[:4])
+    schema_html  = checks_html(schema_checks or fallback(struct_checks, [['schema','json'],['og','graph'],['twitter']]))
+    sitemap_html = checks_html(sitemap_checks or fallback(struct_checks, [['sitemap'],['llms'],['lang']]))
+    perf_html    = checks_html(rend_checks[:4])
+    content_html = checks_html(content_checks or fallback(struct_checks, [['heading','h1'],['title'],['description']]))
+    intl_html    = checks_html(intl_checks or fallback(struct_checks, [['lang'],['charset'],['hreflang']]))
+
+    row1 = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.9rem;margin-bottom:0.9rem;">
+      {_cat_card("🤖 AI Crawler Access",      ai_crawler_score, ai_html)}
+      {_cat_card("📄 Structured Data",         schema_score,     schema_html)}
+      {_cat_card("📡 Sitemap &amp; Discovery", sitemap_score,    sitemap_html)}
+    </div>"""
+
+    row2 = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.9rem;">
+      {_cat_card("⚡ Performance",          perf_score,    perf_html)}
+      {_cat_card("🔗 Content Citability",   content_score, content_html)}
+      {_cat_card("🌐 Internationalisation", intl_score,    intl_html)}
+    </div>"""
 
     _html_block(f"""
     <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
@@ -373,11 +440,7 @@ def display_category_scores(scores):
       Category Breakdown
       <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
     </div>
-    <div style="display:flex;gap:0.9rem;">
-      {card("🚫 Bot Access · 40%",          bot,    bot_detail)}
-      {card("🎨 Renderability · 30%",        render, rend_detail)}
-      {card("📋 Structure &amp; Meta · 30%", struct, struct_detail)}
-    </div>""", height=210)
+    {row1}{row2}""", height=490)
 
 
 def display_check_result(check):
@@ -418,36 +481,50 @@ def display_check_result(check):
     st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:0.6rem 0;">', unsafe_allow_html=True)
 
 
-def display_detailed_results(results):
-    """Display detailed check results by category"""
-    st.markdown("## 📊 Detailed Results")
-    
-    # Bot Access Checks
-    with st.expander("## 🚫 Bot Access Checks", expanded=True):
-        checks = results['checks']['bot_access']
-        if checks:
-            for check in checks:
-                display_check_result(check)
-        else:
-            st.info("No bot access checks performed")
-    
-    # Renderability Checks
-    with st.expander("## 🎨 Renderability Checks", expanded=True):
-        checks = results['checks']['renderability']
-        if checks:
-            for check in checks:
-                display_check_result(check)
-        else:
-            st.info("No renderability checks performed")
-    
-    # Structure Checks
-    with st.expander("## 📋 Structure & Metadata Checks", expanded=True):
-        checks = results['checks']['structure']
-        if checks:
-            for check in checks:
-                display_check_result(check)
-        else:
-            st.info("No structure checks performed")
+def display_recommended_fixes(scorer):
+    """Render all failed + warn checks as recommended fix cards."""
+    all_checks = []
+    for cat, checks in scorer.results.items():
+        for c in checks:
+            if c['status'] in ('fail', 'warn'):
+                all_checks.append({**c, 'category': cat})
+
+    if not all_checks:
+        return
+
+    fixes_html = ""
+    for check in all_checks:
+        is_crit   = check['status'] == 'fail'
+        left_col  = "#dc2626" if is_crit else "#d97706"
+        badge_bg  = "#fee2e2" if is_crit else "#fef9c3"
+        badge_fg  = "#991b1b" if is_crit else "#854d0e"
+        badge_lbl = "Critical"  if is_crit else "Warning"
+        fix_line  = ""
+        if check.get('fix'):
+            fix_line = (f'<div style="margin-top:0.4rem;font-size:0.83rem;color:#57606a;">'
+                        f'<strong style="color:#2e1a47;">Fix:</strong> {check["fix"]}</div>')
+        fixes_html += f"""
+        <div style="background:white;border:1.5px solid #ddd6fe;border-left:4px solid {left_col};
+                    border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      margin-bottom:0.4rem;gap:0.75rem;">
+            <span style="font-size:0.88rem;font-weight:700;color:#2e1a47;">{check['name']}</span>
+            <span style="font-size:0.67rem;font-weight:700;padding:0.15rem 0.6rem;border-radius:20px;
+                         white-space:nowrap;flex-shrink:0;background:{badge_bg};color:{badge_fg};">{badge_lbl}</span>
+          </div>
+          <div style="font-size:0.83rem;color:#57606a;line-height:1.6;">{check['message']}</div>
+          {fix_line}
+        </div>"""
+
+    n = len(all_checks)
+    card_h = n * 115 + 55
+    _html_block(f"""
+    <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
+      Recommended Fixes
+      <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+    </div>
+    {fixes_html}""", height=card_h)
 
 
 def display_summary(results, url: str = "", elapsed: float = 0.0):
@@ -867,56 +944,152 @@ def analyze_url(url: str):
 
             st.markdown('<hr style="border:none;border-top:1px solid #ede9fe;margin:1rem 0">', unsafe_allow_html=True)
 
-        # Summary strip (includes score badge — no separate score card needed)
+        # Summary strip (includes score badge)
         display_summary(results, url=url, elapsed=final_time)
 
-        # Category cards
-        display_category_scores(results['scores'])
+        # 6-category card grid
+        display_category_scores(results)
 
-        # Detailed check results inside expanders
-        display_detailed_results(results)
-
-        # Priority fixes as styled cards
-        failed_checks = scorer.get_failed_checks()
-        if failed_checks:
-            fixes_html = ""
-            for check in failed_checks:
-                fix_line = ""
-                if check['fix']:
-                    fix_line = (f'<div style="margin-top:0.4rem;font-size:0.84rem;color:#57606a;">'
-                                f'<strong style="color:#2e1a47;">Fix:</strong> {check["fix"]}</div>')
-                fixes_html += f"""
-                <div style="background:white;border:1.5px solid #ddd6fe;
-                            border-left:4px solid #dc2626;border-radius:10px;
-                            padding:1.1rem 1.3rem;margin-bottom:0.8rem;">
-                  <div style="display:flex;justify-content:space-between;
-                              align-items:center;margin-bottom:0.45rem;gap:0.8rem;">
-                    <span style="font-size:0.9rem;font-weight:700;color:#2e1a47;">
-                      {check['name']}
-                    </span>
-                    <span style="font-size:0.68rem;font-weight:700;padding:0.16rem 0.6rem;
-                                 border-radius:20px;white-space:nowrap;flex-shrink:0;
-                                 background:#fee2e2;color:#991b1b;">Critical</span>
-                  </div>
-                  <div style="font-size:0.84rem;color:#57606a;line-height:1.6;">
-                    <strong style="color:#2e1a47;">Issue:</strong> {check['message']}
-                  </div>
-                  {fix_line}
-                </div>"""
-
-            card_height = 140 * len(failed_checks) + 60
-            _html_block(f"""
-            <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;
-                        text-transform:uppercase;color:#5b21b6;display:flex;
-                        align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
-              Priority Fixes
-              <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
-            </div>
-            {fixes_html}""", height=card_height)
+        # Recommended fixes (fails + warnings)
+        display_recommended_fixes(scorer)
         
     except Exception as e:
         st.error(f"❌ An error occurred during analysis: {str(e)}")
         st.exception(e)
+
+
+def _example_scenario():
+    """Show a pre-rendered example result (example.com) on page load."""
+
+    def ex_card(title, score, items):
+        rows = "".join(
+            f'<div style="display:flex;gap:0.35rem;margin:0.25rem 0;font-size:0.79rem;color:#57606a;">'
+            f'{icon} {text}</div>'
+            for icon, text in items
+        )
+        return f"""
+        <div style="background:white;border:1.5px solid #ddd6fe;border-radius:10px;padding:1.1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.6rem;">
+            <div style="font-size:0.83rem;font-weight:700;color:#2e1a47;line-height:1.3;max-width:74%;">{title}</div>
+            <div style="font-size:1.75rem;font-weight:800;line-height:1;color:{_score_color(score)};flex-shrink:0;">{score}</div>
+          </div>
+          <span style="display:inline-block;padding:0.15rem 0.6rem;border-radius:20px;font-size:0.68rem;
+                       font-weight:700;margin-bottom:0.65rem;{_badge_style(score)}">{_badge_label(score)}</span>
+          <div style="height:1px;background:#ede9fe;margin:0.6rem 0;"></div>
+          {rows}
+        </div>"""
+
+    def ex_fix(name, msg, fix, is_crit=True):
+        left  = "#dc2626" if is_crit else "#d97706"
+        bb    = "#fee2e2" if is_crit else "#fef9c3"
+        bf    = "#991b1b" if is_crit else "#854d0e"
+        bl    = "Critical" if is_crit else "Warning"
+        return f"""
+        <div style="background:white;border:1.5px solid #ddd6fe;border-left:4px solid {left};
+                    border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      margin-bottom:0.4rem;gap:0.75rem;">
+            <span style="font-size:0.88rem;font-weight:700;color:#2e1a47;">{name}</span>
+            <span style="font-size:0.67rem;font-weight:700;padding:0.15rem 0.6rem;border-radius:20px;
+                         white-space:nowrap;background:{bb};color:{bf};">{bl}</span>
+          </div>
+          <div style="font-size:0.83rem;color:#57606a;line-height:1.6;">{msg}</div>
+          <div style="margin-top:0.4rem;font-size:0.83rem;color:#57606a;">
+            <strong style="color:#2e1a47;">Fix:</strong> {fix}
+          </div>
+        </div>"""
+
+    pill = ("display:inline-flex;align-items:center;gap:0.35rem;"
+            "background:#f5f3ff;border:1px solid #ddd6fe;"
+            "border-radius:6px;padding:0.28rem 0.65rem;font-size:0.75rem;color:#2e1a47;")
+    dot = "width:7px;height:7px;border-radius:50%;display:inline-block;"
+
+    # Summary strip
+    _html_block(f"""
+    <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
+      Analysis Summary &nbsp;<span style="font-weight:400;text-transform:none;color:#aaa;font-size:0.7rem;">— example.com preview</span>
+      <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:auto 1fr auto;gap:1.25rem;background:white;
+                border:1.5px solid #ddd6fe;border-radius:12px;padding:1.25rem 1.5rem;align-items:center;">
+      <div style="background:linear-gradient(135deg,#6d28d9,#4c1d95);border-radius:10px;
+                  width:82px;height:82px;display:flex;flex-direction:column;
+                  align-items:center;justify-content:center;text-align:center;">
+        <span style="font-size:2.2rem;font-weight:800;line-height:1;color:#facc15;">72</span>
+        <span style="font-size:0.72rem;font-weight:700;color:rgba(224,210,255,0.88);">Grade B</span>
+      </div>
+      <div>
+        <div style="font-size:0.98rem;font-weight:700;margin-bottom:0.25rem;color:#2e1a47;">example.com — Analysis Complete</div>
+        <div style="font-size:0.86rem;color:#57606a;line-height:1.6;">
+          Solid foundation but GPTBot &amp; PerplexityBot are blocked, structured data is incomplete,
+          and key pages lack content depth to be reliably cited by AI engines.
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.7rem;">
+          <span style="{pill}"><span style="{dot}background:#dc2626;"></span><strong>3 Critical</strong></span>
+          <span style="{pill}"><span style="{dot}background:#d97706;"></span><strong>3 Warnings</strong></span>
+          <span style="{pill}"><span style="{dot}background:#16a34a;"></span><strong>9 Passed</strong></span>
+          <span style="{pill}">⚡ 312 ms</span>
+          <span style="{pill}">200 OK</span>
+        </div>
+      </div>
+      <div style="font-size:0.76rem;color:#57606a;text-align:right;display:flex;flex-direction:column;gap:0.22rem;white-space:nowrap;">
+        <div><strong style="color:#2e1a47;">Scanned:</strong> 2 Jul 2025</div>
+        <div>14:32 UTC</div>
+        <div style="color:#16a34a;font-weight:700;">✓ HTTPS</div>
+        <div style="color:#16a34a;font-weight:700;">✓ Sitemap found</div>
+      </div>
+    </div>""", height=175)
+
+    # 6 category cards
+    row1 = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.9rem;margin-bottom:0.9rem;">
+      {ex_card("🤖 AI Crawler Access", 38, [("❌","GPTBot blocked in robots.txt"),("❌","PerplexityBot not permitted"),("✅","Googlebot allowed")])}
+      {ex_card("📄 Structured Data",   61, [("✅","JSON-LD present"),("✅","OpenGraph tags found"),("✅","Canonical URL set"),("❌","No Article / FAQPage schema")])}
+      {ex_card("📡 Sitemap &amp; Discovery", 88, [("✅","sitemap.xml accessible"),("✅","Sitemap in robots.txt"),("✅","142 URLs indexed"),("✅","Last-modified dates present")])}
+    </div>"""
+    row2 = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.9rem;">
+      {ex_card("⚡ Performance",          91, [("✅","TTFB under 600 ms"),("✅","HTTPS enforced"),("✅","No render-blocking JS"),("✅","Alt text on images")])}
+      {ex_card("🔗 Content Citability",   54, [("✅","Author information present"),("✅","Publication date set"),("❌","No summary / abstract"),("❌","Thin content (<400 words)")])}
+      {ex_card("🌐 Internationalisation", 80, [("✅","lang attribute set (en)"),("✅","hreflang tags present"),("✅","Character encoding declared"),("⚠️","No regional variants")])}
+    </div>"""
+
+    _html_block(f"""
+    <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
+      Category Breakdown
+      <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+    </div>
+    {row1}{row2}""", height=490)
+
+    # Recommended fixes
+    fixes = [
+        ex_fix("Allow GPTBot and PerplexityBot in robots.txt",
+               "Your robots.txt blocks GPTBot and PerplexityBot, preventing ChatGPT Search and Perplexity from crawling.",
+               "Add User-agent: GPTBot + Allow: / and repeat for PerplexityBot. Remove existing Disallow rules for these agents.",
+               is_crit=True),
+        ex_fix("Add Article or FAQPage JSON-LD schema",
+               "Pages without Article or FAQPage structured data are less likely to appear in AI-generated responses.",
+               "Add a &lt;script type='application/ld+json'&gt; block with Article or FAQPage schema to key landing pages.",
+               is_crit=False),
+        ex_fix("Increase content depth — aim for 400+ words per page",
+               "The analysed page contains fewer than 400 words. AI models cite pages with substantial, self-contained explanations.",
+               "Add a short intro paragraph answering the primary query directly — this is how AI models extract answer snippets.",
+               is_crit=False),
+        ex_fix("Add BreadcrumbList structured data",
+               "Breadcrumb schema helps AI crawlers understand your site hierarchy and improves page-context signals.",
+               "Add a BreadcrumbList JSON-LD block to all non-homepage pages.",
+               is_crit=True),
+    ]
+    n = len(fixes)
+    _html_block(f"""
+    <div style="font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+                color:#5b21b6;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.9rem;">
+      Recommended Fixes
+      <span style="flex:1;height:1.5px;background:#ddd6fe;display:inline-block;"></span>
+    </div>
+    {"".join(fixes)}""", height=n * 130 + 55)
 
 
 def main():
@@ -955,6 +1128,10 @@ def main():
     """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Example scenario shown on page load ──────────────────────────────────
+    if not analyze_button:
+        _example_scenario()
 
     # Perform analysis
     if analyze_button:
