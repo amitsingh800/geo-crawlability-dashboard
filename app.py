@@ -44,17 +44,59 @@ st.set_page_config(
 st.html("""
 <title>GEO Crawlability Checker | AI Crawler SEO Audit</title>
 <meta name="description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
+<link rel="canonical" href="https://geo-crawlability.streamlit.app/">
 <meta property="og:title" content="GEO Crawlability Checker | AI Crawler SEO Audit">
 <meta property="og:description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
 <meta property="og:url" content="https://geo-crawlability.streamlit.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GEO Crawlability Checker | AI Crawler SEO Audit">
+<meta name="twitter:description" content="Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.">
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "GEO Crawlability Checker",
-  "url": "https://geo-crawlability.streamlit.app/",
-  "description": "Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools."
-}
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "GEO Crawlability Checker",
+    "url": "https://geo-crawlability.streamlit.app/",
+    "description": "Audit your website for AI crawlability, structured data, heading hierarchy, metadata, and bot access signals used by AI crawlers and citation tools.",
+    "applicationCategory": "SEO Tool",
+    "speakable": {
+      "@type": "SpeakableSpecification",
+      "cssSelector": [".geo-title", ".geo-subtitle"]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is GEO crawlability?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "GEO crawlability measures how accessible your website is to AI-powered search engines like ChatGPT Search, Perplexity, and Google AI Overviews. A high score means your content is more likely to be cited in AI-generated answers."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I allow AI crawlers to access my website?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Add explicit Allow rules for AI bot user-agents in your robots.txt file. Key bots to allow include GPTBot (OpenAI), ClaudeBot (Anthropic), Google-Extended, and PerplexityBot."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a good GEO crawlability score?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Scores of 80-100 are Good, meaning your site is well optimised for AI crawlers. Scores of 50-79 need improvement, and scores below 50 indicate critical issues blocking AI access."
+        }
+      }
+    ]
+  }
+]
 </script>
 """)
 
