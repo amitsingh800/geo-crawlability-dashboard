@@ -908,7 +908,7 @@ def analyze_url(url: str):
 
         # Display results with final time
         final_time = time.time() - start_time
-        timer_display.success(f"✅ Analysis complete in {final_time:.1f}s")
+        timer_display.empty()
 
         # Show blocking detection if applicable
         if blocking_reason or used_fallback:
