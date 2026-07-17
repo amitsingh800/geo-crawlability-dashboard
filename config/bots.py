@@ -42,7 +42,7 @@ AI_BOTS = [
 USER_AGENT = 'Mozilla/5.0 (compatible; GEO-Crawlability-Checker/1.0; +https://github.com/your-repo)'
 
 # Timeout settings (in seconds)
-REQUEST_TIMEOUT = 60  # Increased from 30 to handle slow sites
+REQUEST_TIMEOUT = 30  # 30s — sites not responding in this window are bot-blocking
 PLAYWRIGHT_TIMEOUT = 90000  # milliseconds (90 seconds)
 
 # Renderability thresholds

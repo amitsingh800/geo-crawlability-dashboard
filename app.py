@@ -654,6 +654,20 @@ def find_best_url_match(user_input: str) -> Tuple[Optional[str], Optional[str]]:
     return None, f"❌ Could not find a working website for '{user_input}'. Please enter a valid domain."
 
 
+def _display_blocked_results(results, scorer, url: str, blocking_msg: str, likely_system: str):
+    """Render score + 6-category cards + recommended fixes for bot-blocked sites."""
+    # Warning banner
+    st.warning(
+        f"⚠️ **Bot Protection Detected** — {blocking_msg}.  \n"
+        f"Likely system: {likely_system}.  \n"
+        "Scores below reflect the impact of blocking on AI crawlability."
+    )
+    # Summary strip + cards + fixes — same layout as a normal result
+    display_summary(results, url=url)
+    display_category_scores(results)
+    display_recommended_fixes(scorer)
+
+
 def analyze_url(url: str):
     """
     Main analysis function
@@ -720,79 +734,33 @@ def analyze_url(url: str):
                     )
                 else:
                     blocking_reason = "timeout_strict"
-                    st.error(f"❌ Site blocks automated access even with real browser")
-                    st.warning("🤖 **Bot Detection Active**: This site uses sophisticated bot protection that detects and blocks automated tools, even when using a real browser engine.")
-                    st.info("💡 **What this means**: The site loads fine in Chrome because you're a human user, but blocks automated crawlers (including AI bots) through advanced fingerprinting and behavioral analysis.")
-                    
-                    # Add critical blocking checks
+                    # Add bot-blocking checks
                     scorer.add_check(
                         'bot_access',
                         'Strict Bot Protection (Timeout)',
                         'fail',
-                        'Site blocks ALL automated access including real browsers via timeout mechanisms',
-                        'Critical: Disable advanced bot detection or whitelist AI crawler user-agents'
+                        'Site blocked all automated access within 30s — including real browser fallback',
+                        'Disable advanced bot detection or whitelist AI crawler user-agents (GPTBot, ClaudeBot, etc.)'
                     )
-                    
-                    # Add placeholder checks for areas that couldn't be tested
-                    scorer.add_check('renderability', 'Content Analysis', 'fail',
-                                   'Could not analyze - site blocked access',
-                                   'Fix bot protection to enable content analysis')
-                    scorer.add_check('structure', 'Metadata Analysis', 'fail',
-                                   'Could not analyze - site blocked access',
-                                   'Fix bot protection to enable structure analysis')
-                    
-                    # Calculate partial score and display
-                    st.markdown("---")
-                    st.markdown("## 📊 Partial Analysis Results")
-                    st.warning("⚠️ **Limited Analysis**: Only bot protection could be assessed. Other checks were blocked.")
-                    
+                    scorer.add_check('bot_access', 'AI Crawler Access', 'fail',
+                                     'Site is inaccessible to AI crawlers due to bot protection',
+                                     'Whitelist GPTBot, ClaudeBot, PerplexityBot, Google-Extended in your WAF settings')
+                    scorer.add_check('renderability', 'Content Accessibility', 'fail',
+                                     'Could not analyse — site blocked access before content could be retrieved',
+                                     'Fix bot protection to allow automated content analysis')
+                    scorer.add_check('structure', 'Metadata & Schema', 'fail',
+                                     'Could not analyse — site blocked access before structure could be checked',
+                                     'Fix bot protection to allow structure and metadata analysis')
+
                     results = scorer.get_all_results()
-                    
-                    # Clear progress indicators
                     progress_bar.empty()
                     status_text.empty()
                     status_detail.empty()
-                    final_time = time.time() - start_time
-                    timer_display.error(f"⛔ Analysis blocked after {final_time:.1f}s")
-                    
-                    # Show blocking report
-                    st.markdown("## 🚨 Bot Protection Detected")
-                    st.error("**Blocking Method**: Strict Timeout Protection (All Access Blocked)")
-                    st.markdown("""
-                    **Impact**: Site blocks ALL automated access including real browsers
-                    - **Severity**: Extreme - Complete inaccessibility to AI crawlers
-                    - **Likely System**: Advanced WAF with strict fingerprinting and behavioral analysis
-                    - **Score Impact**: Maximum penalty - site is completely inaccessible
-                    """)
-                    
-                    # Show partial score
-                    display_score(results['scores'])
+                    timer_display.empty()
 
-                    st.markdown("### ❌ Checks That Could Not Be Performed")
-                    st.error("""
-                    Due to bot protection blocking, the following could not be analyzed:
-                    - ❌ **Renderability Checks**: JavaScript content analysis, paywall detection
-                    - ❌ **Structure Checks**: Schema.org, headings, metadata, sitemap
-                    - ⚠️ **Bot Access**: Only blocking detection was possible, robots.txt not checked
-                    """)
-                    
-                    st.markdown("---")
-                    st.markdown("### 💡 Recommendations")
-                    st.info("""
-                    **To improve this score:**
-                    1. Disable or configure bot detection to allow AI crawlers
-                    2. Whitelist specific AI bot user-agents (GPTBot, ClaudeBot, etc.)
-                    3. Implement rate limiting instead of complete blocking
-                    4. Contact your WAF/CDN provider to adjust bot management settings
-                    
-                    **Current systems that may be blocking:**
-                    - Cloudflare Bot Management
-                    - Akamai Bot Manager
-                    - PerimeterX
-                    - DataDome
-                    - Custom WAF rules
-                    """)
-                    
+                    _display_blocked_results(results, scorer, url,
+                                             "Site blocked all access within 30s (timeout + browser fallback failed)",
+                                             "Cloudflare Bot Management · Akamai · PerimeterX · DataDome · Custom WAF")
                     return
             except Exception as e:
                 st.error(f"❌ Browser fetch failed: {str(e)}")
@@ -825,21 +793,32 @@ def analyze_url(url: str):
                     )
                 else:
                     blocking_reason = "403_strict"
-                    st.error(f"❌ Failed to fetch URL even with browser: Site has strong bot protection")
-                    st.info("💡 This site actively blocks automated access. Consider:")
-                    st.markdown("""
-                    - Checking if the site allows AI crawlers in robots.txt
-                    - Contacting the site owner for API access
-                    - Using the site's official API if available
-                    """)
-                    # Add severe blocking check
                     scorer.add_check(
                         'bot_access',
-                        'Strict Bot Protection',
+                        'Strict Bot Protection (403)',
                         'fail',
-                        'Site blocks ALL automated access including real browsers - extremely restrictive',
-                        'Critical: Site is completely inaccessible to AI crawlers. Contact site owner to whitelist AI bot user-agents'
+                        'Site returned 403 Forbidden for all automated access including real browser fallback',
+                        'Contact your WAF/CDN provider to whitelist AI crawler user-agents'
                     )
+                    scorer.add_check('bot_access', 'AI Crawler Access', 'fail',
+                                     'Site is completely inaccessible to AI crawlers',
+                                     'Whitelist GPTBot, ClaudeBot, PerplexityBot, Google-Extended in WAF settings')
+                    scorer.add_check('renderability', 'Content Accessibility', 'fail',
+                                     'Could not analyse — 403 blocked all access',
+                                     'Fix bot protection to allow content analysis')
+                    scorer.add_check('structure', 'Metadata & Schema', 'fail',
+                                     'Could not analyse — 403 blocked all access',
+                                     'Fix bot protection to allow structure analysis')
+
+                    results = scorer.get_all_results()
+                    progress_bar.empty()
+                    status_text.empty()
+                    status_detail.empty()
+                    timer_display.empty()
+
+                    _display_blocked_results(results, scorer, url,
+                                             "Site returned 403 Forbidden — all automated access blocked",
+                                             "Cloudflare Bot Management · Akamai · PerimeterX · DataDome · Custom WAF")
                     return
             except Exception as e:
                 st.error(f"❌ Browser fetch also failed: {str(e)}")
