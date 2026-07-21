@@ -1049,7 +1049,7 @@ def _example_scenario():
                   width:82px;height:82px;display:flex;flex-direction:column;
                   align-items:center;justify-content:center;text-align:center;">
         <span style="font-size:2.2rem;font-weight:800;line-height:1;color:#facc15;">72</span>
-        <span style="font-size:0.72rem;font-weight:700;color:rgba(224,210,255,0.88);">Grade B</span>
+        <span style="font-size:0.72rem;font-weight:700;color:rgba(224,210,255,0.88);">🟡 Needs Improvement</span>
       </div>
       <div>
         <div style="font-size:0.98rem;font-weight:700;margin-bottom:0.25rem;color:#2e1a47;">example.com — Analysis Complete</div>
