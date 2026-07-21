@@ -164,7 +164,7 @@ The `requirements.txt` already includes all Python packages.
    - Name: `geo-crawlability-dashboard`
    - Environment: `Python 3`
    - Build Command: `pip install -r requirements.txt && playwright install chromium`
-   - Start Command: `streamlit run app.py --server.port=$PORT --server.address=0.0.0.0`
+   - Start Command: `streamlit run app.py --server.port=$PORT --server.address=127.0.0.1`
 
 4. **Deploy**
    - Click "Create Web Service"
@@ -182,29 +182,29 @@ The `requirements.txt` already includes all Python packages.
 
 1. **Create Dockerfile**
    ```dockerfile
-   FROM python:3.9-slim
+   FROM registry.redhat.io/ubi9/python-311-minimal:latest
 
    WORKDIR /app
 
-   # Install system dependencies
-   RUN apt-get update && apt-get install -y \
-       chromium \
-       chromium-driver \
-       && rm -rf /var/lib/apt/lists/*
+   # Create non-root user
+   RUN useradd -m -u 1001 appuser
 
-   # Copy requirements
+   # Copy and install dependencies
    COPY requirements.txt .
-   RUN pip install --no-cache-dir -r requirements.txt
-   RUN playwright install chromium
+   RUN pip install --no-cache-dir -r requirements.txt && \
+       playwright install chromium --with-deps
 
    # Copy app
-   COPY . .
+   COPY --chown=appuser:appuser . .
+
+   # Switch to non-root user
+   USER 1001
 
    # Expose port
    EXPOSE 8080
 
-   # Run app
-   CMD streamlit run app.py --server.port=8080 --server.address=0.0.0.0
+   # Run app (bind to localhost only; Cloud Run handles external TLS termination)
+   CMD streamlit run app.py --server.port=8080 --server.address=127.0.0.1
    ```
 
 2. **Deploy to Cloud Run**
@@ -237,7 +237,7 @@ The `requirements.txt` already includes all Python packages.
 3. **Configure**
    - Detected as: Python
    - Build Command: `pip install -r requirements.txt && playwright install chromium`
-   - Run Command: `streamlit run app.py --server.port=8080 --server.address=0.0.0.0`
+   - Run Command: `streamlit run app.py --server.port=8080 --server.address=127.0.0.1`
 
 4. **Deploy**
    - Click "Next" → "Launch App"

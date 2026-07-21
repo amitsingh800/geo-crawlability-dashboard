@@ -357,7 +357,7 @@ def display_score(scores):
                 background:{bg};border:1.5px solid {border};">
       <div style="font-size:1rem;color:#5b21b6;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Overall GEO Score</div>
       <div style="font-size:3.6rem;font-weight:800;margin:0.5rem 0;color:#2e1a47;">{total_score}</div>
-      <div style="font-size:1.4rem;font-weight:800;color:#2e1a47;">Grade {grade}</div>
+      <div style="font-size:1.4rem;font-weight:800;color:#2e1a47;">{grade}</div>
     </div>""", height=160)
 
 
@@ -610,7 +610,7 @@ def display_summary(results, url: str = "", elapsed: float = 0.0):
                   width:82px;height:82px;display:flex;flex-direction:column;
                   align-items:center;justify-content:center;flex-shrink:0;text-align:center;">
         <span style="font-size:2.2rem;font-weight:800;line-height:1;color:#facc15;">{total}</span>
-        <span style="font-size:0.72rem;font-weight:700;color:rgba(224,210,255,0.88);">Grade {grade}</span>
+        <span style="font-size:0.72rem;font-weight:700;color:rgba(224,210,255,0.88);">{grade}</span>
       </div>
 
       <div>
